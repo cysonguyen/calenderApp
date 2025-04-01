@@ -1,32 +1,20 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/sequelize');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/sequelize");
 
-const User = sequelize.define('User', {
-  username: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    validate: {
-      len: [3, 50]
-    }
+const User = sequelize.define(
+  "User",
+  {
+    full_name: { type: DataTypes.STRING(255), allowNull: false },
+    username: { type: DataTypes.STRING(50), allowNull: false, unique: true },
+    email: { type: DataTypes.STRING(50), allowNull: false, unique: true },
+    password: { type: DataTypes.STRING(255), allowNull: false },
+    mssv: { type: DataTypes.STRING(255), allowNull: true },
+    level: { type: DataTypes.STRING(255), allowNull: true },
+    work_place: { type: DataTypes.STRING(255), allowNull: true },
+    birth_day: { type: DataTypes.DATE, allowNull: true },
+    role: { type: DataTypes.STRING(50), allowNull: false },
   },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    validate: {
-      isEmail: true
-    }
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      len: [6, 100]
-    }
-  }
-}, {
-  timestamps: true
-});
+  { timestamps: true }
+);
 
-module.exports = User; 
+module.exports = User;

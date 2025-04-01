@@ -19,11 +19,6 @@ sequelize.sync()
 // Routes
 app.use('/api', routes);
 
-// Protected route example
-app.get('/api/protected', authenticateToken, (req, res) => {
-  res.json({ message: 'This is a protected route', user: req.user });
-});
-
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

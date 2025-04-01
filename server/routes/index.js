@@ -1,12 +1,18 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const authRoutes = require('./auth');
+const authRoutes = require("./auth");
+const accountRoutes = require("./account");
+const scheduleRoutes = require("./schedule");
+const meetingRoutes = require("./meeting");
+const notificationRoutes = require("./notification");
+const clientEventRoutes = require("./client-event");
+const { authenticateToken } = require("../middleware/auth");
 
-// Mount routes
-router.use('/auth', authRoutes);
+router.use("/auth", authRoutes);
+router.use("/account", authenticateToken, accountRoutes);
+router.use("/schedule", authenticateToken, scheduleRoutes);
+router.use("/meeting", authenticateToken, meetingRoutes);
+router.use("/client-event", clientEventRoutes);
+router.use("/notification", authenticateToken, notificationRoutes);
 
-// Add more route modules here as needed
-// Example: router.use('/users', userRoutes);
-// Example: router.use('/events', eventRoutes);
-
-module.exports = router; 
+module.exports = router;

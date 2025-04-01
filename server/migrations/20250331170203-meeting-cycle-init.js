@@ -1,0 +1,42 @@
+'use strict';
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  up: async (queryInterface, Sequelize) => {
+    await queryInterface.createTable("MeetingCycles", {
+      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      schedule_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: { model: "Schedules", key: "id" },
+        onDelete: "CASCADE"
+      },
+      start_time: { type: Sequelize.DATE, allowNull: false },
+      end_time: { type: Sequelize.DATE, allowNull: false },
+      cycle_index: { type: Sequelize.INTEGER, allowNull: false },
+      meeting_id: { type: Sequelize.INTEGER, allowNull: false },
+      createdAt: { type: Sequelize.DATE, allowNull: false },
+      updatedAt: { type: Sequelize.DATE, allowNull: false }
+    });
+
+    await queryInterface.removeColumn("Meetings", "schedule_id");
+    await queryInterface.addColumn("Meetings", "meeting_cycle_id", {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: { model: "MeetingCycles", key: "id" },
+      onDelete: "CASCADE"
+    });
+
+  },
+
+  down: async (queryInterface) => {
+    await queryInterface.dropTable("MeetingCycles");
+    await queryInterface.addColumn("Meetings", "schedule_id", {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: { model: "Schedules", key: "id" },
+      onDelete: "CASCADE"
+    });
+    await queryInterface.removeColumn("Meetings", "meeting_cycle_id");
+  }
+};
