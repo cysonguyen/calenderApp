@@ -1,21 +1,32 @@
-import dayjs from "dayjs";
+const dayjs = require("dayjs");
 
-export function validateEmail(email) {
+module.exports = {
+  validateEmail,
+  validatePassword,
+  validateMSSV,
+  removeNullOrUndefined,
+  isOverlapTime,
+  isInsideTime,
+  compareIdsArray,
+  pick
+};
+
+function validateEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
 
-export function validatePassword(password) {
+function validatePassword(password) {
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
   return passwordRegex.test(password);
 }
 
-export function validateMSSV(mssv) {
+function validateMSSV(mssv) {
   const mssvRegex = /^\d{8}$/;
   return mssvRegex.test(mssv);
 }
 
-export function removeNullOrUndefined(obj) {
+function removeNullOrUndefined(obj) {
   return Object.fromEntries(
     Object.entries(obj).filter(
       ([_, value]) => value !== null && value !== undefined && value !== ""
@@ -23,18 +34,18 @@ export function removeNullOrUndefined(obj) {
   );
 }
 
-export function isOverlapTime(start_time, end_time, object) {
+function isOverlapTime(start_time, end_time, object) {
   const { start_time: object_start_time, end_time: object_end_time } = object;
   return (dayjs(start_time).isBefore(dayjs(object_start_time)) && dayjs(end_time).isBefore(dayjs(object_start_time))) ||
     (dayjs(start_time).isAfter(dayjs(object_end_time)) && dayjs(end_time).isAfter(dayjs(object_end_time)));
 }
 
-export function isInsideTime(start_time, end_time, object) {
+function isInsideTime(start_time, end_time, object) {
   const { start_time: object_start_time, end_time: object_end_time } = object;
   return dayjs(start_time).isAfter(dayjs(object_start_time)) && dayjs(end_time).isBefore(dayjs(object_end_time));
 }
 
-export function compareIdsArray(oldArray, newArray) {
+function compareIdsArray(oldArray, newArray) {
   if (!Array.isArray(oldArray) || !Array.isArray(newArray)) {
     return { removedIds: [], addedIds: [] };
   }
@@ -43,7 +54,7 @@ export function compareIdsArray(oldArray, newArray) {
   return { removedIds, addedIds };
 }
 
-export function pick(obj, keys) {
+function pick(obj, keys) {
   return keys.reduce((acc, key) => {
     if (obj[key] !== undefined) {
       acc[key] = obj[key];
