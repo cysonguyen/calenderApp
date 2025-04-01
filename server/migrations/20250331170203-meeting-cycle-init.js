@@ -18,25 +18,9 @@ module.exports = {
       createdAt: { type: Sequelize.DATE, allowNull: false },
       updatedAt: { type: Sequelize.DATE, allowNull: false }
     });
-
-    await queryInterface.removeColumn("Meetings", "schedule_id");
-    await queryInterface.addColumn("Meetings", "meeting_cycle_id", {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-      references: { model: "MeetingCycles", key: "id" },
-      onDelete: "CASCADE"
-    });
-
   },
 
   down: async (queryInterface) => {
-    await queryInterface.dropTable("MeetingCycles");
-    await queryInterface.addColumn("Meetings", "schedule_id", {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-      references: { model: "Schedules", key: "id" },
-      onDelete: "CASCADE"
-    });
-    await queryInterface.removeColumn("Meetings", "meeting_cycle_id");
+    await queryInterface.dropTable("MeetingCycles");F
   }
 };

@@ -13,6 +13,7 @@ module.exports = {
       level: { type: Sequelize.STRING(255), allowNull: true },
       work_place: { type: Sequelize.STRING(255), allowNull: true },
       birth_day: { type: Sequelize.DATE, allowNull: true },
+      role: { type: Sequelize.STRING(50), allowNull: true },
       createdAt: { type: Sequelize.DATE, allowNull: false },
       updatedAt: { type: Sequelize.DATE, allowNull: false }
     });
