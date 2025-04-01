@@ -2,7 +2,7 @@ const { EventEmitter2 } = require("eventemitter2");
 
 const sseEmitter = new EventEmitter2({
   wildcard: true,
-  maxListeners: 0,
+  maxListeners: 1000,
 });
 const clients = new Map();
 

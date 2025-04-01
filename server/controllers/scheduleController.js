@@ -200,12 +200,12 @@ module.exports = {
 
             await Notification.bulkCreate(addedUsers.map(userId => ({
                 user_id: userId,
-                message: `You have a new schedule ${title}`,
+                message: `You have a new schedule ${payload.title ?? existingSchedule.title}`,
                 seen: false,
             })));
             await Notification.bulkCreate(removedUsers.map(userId => ({
                 user_id: userId,
-                message: `You was removed from schedule ${title}`,
+                message: `You was removed from schedule ${payload.title ?? existingSchedule.title}`,
                 seen: false,
             })));
             SSEService.sendToUsers([...addedUsers, ...removedUsers], {

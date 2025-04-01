@@ -1,7 +1,7 @@
 const sequelize = require("../config/sequelize");
 const SSEService = require("../lib/sseService");
 const { Meeting, MeetingCycle, Schedule, Notification } = require("../models");
-const { removeNullOrUndefined } = require("../utils/helper");
+const { removeNullOrUndefined, compareIdsArray } = require("../utils/helper");
 const { validateAvailabilityMeeting } = require("../utils/object/meeting");
 const { createMeetingCycle } = require("./meetingCycleController");
 
@@ -97,7 +97,8 @@ const updateMeeting = async (req, res) => {
                 return res.status(400).json({ error: ["List partner IDs is required"] });
             }
             newData.list_partner_ids = JSON.stringify(list_partner_ids);
-            const { removedPartnerIds, addedPartnerIds } = compareIdsArray(meeting.list_partner_ids, list_partner_ids);
+            const oldPartnerIds = JSON.parse(meeting.list_partner_ids);
+            const { removedIds: removedPartnerIds, addedIds: addedPartnerIds } = compareIdsArray(oldPartnerIds, list_partner_ids);
             partnerIdsNotifyRemove = removedPartnerIds;
             partnerIdsNotifyAdd = addedPartnerIds;
         }
@@ -126,6 +127,7 @@ const updateMeeting = async (req, res) => {
 
         res.status(200).json(meeting);
     } catch (error) {
+        console.log(error);
         return res.status(500).json({ error: [error.message] });
     }
 }
