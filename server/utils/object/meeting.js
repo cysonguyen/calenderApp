@@ -1,7 +1,8 @@
-import { Meeting, MeetingCycle } from "../../models/index.js";
-import { isOverlapTime, isInsideTime } from "../helper.js";
-import dayjs from "dayjs";
-export async function validateAvailabilityMeeting(startTime, endTime, meetingCycleId, title, meetingId = null) {
+const { Meeting, MeetingCycle } = require("../../models");
+const { isOverlapTime, isInsideTime } = require("../helper");
+const dayjs = require("dayjs");
+
+async function validateAvailabilityMeeting(startTime, endTime, meetingCycleId, title, meetingId = null) {
     const errors = [];
     if (dayjs(startTime).isAfter(dayjs(endTime))) {
         errors.push("Start time must be before end time");
@@ -13,7 +14,7 @@ export async function validateAvailabilityMeeting(startTime, endTime, meetingCyc
         }]
     });
     if (meetingCycle) {
-        const meetingsData = meetingCycle?.get({ plain: true }) || {};
+        const meetingsData = meetingCycle.get({ plain: true });
         const { Meetings: meetings } = meetingsData;
 
         if (!isInsideTime(startTime, endTime, meetingsData)) {
@@ -34,3 +35,7 @@ export async function validateAvailabilityMeeting(startTime, endTime, meetingCyc
     }
     return errors;
 }
+
+module.exports = {
+    validateAvailabilityMeeting
+};

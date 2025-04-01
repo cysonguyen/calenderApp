@@ -1,16 +1,5 @@
 const dayjs = require("dayjs");
 
-module.exports = {
-  validateEmail,
-  validatePassword,
-  validateMSSV,
-  removeNullOrUndefined,
-  isOverlapTime,
-  isInsideTime,
-  compareIdsArray,
-  pick
-};
-
 function validateEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
@@ -62,5 +51,16 @@ function pick(obj, keys) {
     return acc;
   }, {});
 }
+
+module.exports = {
+  validateEmail,
+  validatePassword,
+  validateMSSV,
+  removeNullOrUndefined,
+  isOverlapTime,
+  isInsideTime,
+  compareIdsArray,
+  pick
+};
 
 
