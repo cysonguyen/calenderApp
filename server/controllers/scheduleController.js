@@ -11,7 +11,7 @@ module.exports = {
     async getSchedulesByUserId(req, res) {
         try {
             const { userId } = req.params;
-            const { startTime = new Date(), endTime = new Date(), page = 1 } = req.query;
+            const { startTime = new Date(), endTime = new Date('2099-12-31'), page = 1 } = req.query;
             if (!userId) {
                 return res.status(400).json({ errors: ["Missing userId"] });
             }
