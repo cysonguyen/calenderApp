@@ -31,14 +31,15 @@ module.exports = {
 
   async getAccountInfoByQuery(req, res) {
     try {
-      const { id, full_name, mssv, email, username, page = 1 } = req.query;
-      const query = removeNullOrUndefined({ id, full_name, mssv, email, username });
+      const { id, full_name, mssv, email, username, role, page = 1 } = req.query;
+      const query = removeNullOrUndefined({ id, full_name, mssv, email, username, role });
       const whereClause = {};
       if (query.id) whereClause.id = query.id;
       if (query.full_name) whereClause.full_name = { [Op.like]: `%${query.full_name}%` };
       if (query.mssv) whereClause.mssv = { [Op.like]: `%${query.mssv}%` };
       if (query.email) whereClause.email = { [Op.like]: `%${query.email}%` };
       if (query.username) whereClause.username = { [Op.like]: `%${query.username}%` };
+      if (query.role) whereClause.role = query.role;
 
       const users = await User.findAll({
         where: whereClause,
@@ -68,7 +69,6 @@ module.exports = {
       }
       const payload = removeNullOrUndefined({
         full_name,
-        username,
         email,
         mssv,
         level,
@@ -82,6 +82,7 @@ module.exports = {
       const existingUser = await User.findOne({
         where: {
           [Op.or]: [{ email: payload.email || null }, { username: payload.username || null }],
+          id: { [Op.ne]: id },
         },
       });
       if (existingUser) {
@@ -104,16 +105,23 @@ module.exports = {
   async changePassword(req, res) {
     try {
       const { id } = req.params;
-      const { password } = req.body;
+      const { password, oldPassword } = req.body;
       if (!id) {
         return res.status(400).json({ errors: ["Missing id"] });
       }
       if (!password) {
         return res.status(400).json({ errors: ["Missing password"] });
       }
+      if (!oldPassword) {
+        return res.status(400).json({ errors: ["Missing old password"] });
+      }
       const user = await User.findOne({ where: { id } });
       if (!user) {
         return res.status(400).json({ errors: ["User not found"] });
+      }
+      const isPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
+      if (!isPasswordCorrect) {
+        return res.status(400).json({ errors: ["Old password is incorrect"] });
       }
       const hashedPassword = await bcrypt.hash(password, 10);
       await User.update({ password: hashedPassword }, { where: { id } });
@@ -140,26 +148,25 @@ module.exports = {
       }
 
       let group;
-      const userIdsArray = JSON.parse(userIds);
-      if (!Array.isArray(userIdsArray) || userIdsArray.length === 0) {
+      if (!Array.isArray(userIds) || userIds.length === 0) {
         return res.status(400).json({ errors: ["User ids is invalid"] });
       }
       await sequelize.transaction(async (transaction) => {
         group = await Group.create({ name, description }, { transaction });
-        const useGroupEntries = userIdsArray.map((userId) => ({
+        const useGroupEntries = userIds.map((userId) => ({
           group_id: group.id,
           user_id: userId,
         }));
         await UserGroup.bulkCreate(useGroupEntries, { transaction });
       });
 
-      await Notification.bulkCreate(userIdsArray.map(userId => ({
+      await Notification.bulkCreate(userIds.map(userId => ({
         user_id: userId,
         message: `You was added to group ${name}`,
         seen: false,
       })));
 
-      SSEService.sendToUsers(userIdsArray, {
+      SSEService.sendToUsers(userIds, {
         type: "GROUP_UPDATE",
       });
 
@@ -199,11 +206,10 @@ module.exports = {
         return res.status(400).json({ errors: ["Group not found"] });
       }
       const oldUserIds = group.Users.map((user) => user.id);
-      const userIdsArray = JSON.parse(userIds);
-      if (!Array.isArray(userIdsArray) || userIdsArray.length === 0) {
+      if (!Array.isArray(userIds) || userIds.length === 0) {
         return res.status(400).json({ errors: ["User ids is invalid"] });
       }
-      const { removedIds: removedUserIds, addedIds: addedUserIds } = compareIdsArray(oldUserIds, userIdsArray);
+      const { removedIds: removedUserIds, addedIds: addedUserIds } = compareIdsArray(oldUserIds, userIds);
       const userGroupEntries = addedUserIds.map((userId) => ({
         user_id: userId,
         group_id: id,
@@ -291,6 +297,25 @@ module.exports = {
     }
   },
 
+  async getGroupByQuery(req, res) {
+    try {
+      const { name, page = 1, id } = req.query;
+      const query = removeNullOrUndefined({ name, id });
+      const whereClause = {};
+      if (query.id) whereClause.id = query.id;
+      if (query.name) whereClause.name = { [Op.like]: `%${query.name}%` };
+      const groups = await Group.findAll({
+        where: whereClause,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+      });
+      res.status(200).json(groups);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ errors: [error.message] });
+    }
+  },
+
   async deleteGroup(req, res) {
     try {
       const { id } = req.params;
@@ -317,6 +342,29 @@ module.exports = {
     }
   },
 
+  async createStudentUser(req, res) {
+    try {
+      const { full_name, username, email, mssv, birth_day, password } = req.body;
+      if (!full_name || !username || !email || !mssv || !password) {
+        return res.status(400).json({ errors: ["Missing required fields"] });
+      }
+      const existingUser = await User.findOne({
+        where: {
+          [Op.or]: [{ email: email || null }, { username: username || null }],
+        },
+      });
+      if (existingUser) {
+        return res.status(400).json({ errors: ["User already exists"] });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const data = removeNullOrUndefined({ full_name, username, email, mssv, birth_day, password: hashedPassword, role: ROLES.STUDENT });
+      const user = await User.create(data);
+      res.status(200).json(user);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ errors: [error.message] });
+    }
+  },
   async importAccounts(req, res) {
     try {
       const { accounts } = req.body;
