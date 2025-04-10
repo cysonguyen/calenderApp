@@ -18,28 +18,17 @@ import {
   CalendarToday,
   People,
   Settings,
-  ExitToApp,
   ChevronLeft,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
-import { styled } from '@mui/material/styles';
-
 const drawerWidth = 240;
 
 const menuItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
   { text: 'Calendar', icon: <CalendarToday />, path: '/calendar' },
-  { text: 'Users', icon: <People />, path: '/users' },
-  { text: 'Settings', icon: <Settings />, path: '/settings' },
+  { text: 'Groups', icon: <People />, path: '/groups' },
+  { text: 'Students', icon: <People />, path: '/students' },
 ];
-
-const DrawerHeader = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'flex-end',
-  padding: theme.spacing(0, 1),
-  ...theme.mixins.toolbar,
-}));
 
 export default function Drawer({ mobileOpen, onDrawerToggle }) {
   const router = useRouter();
@@ -95,9 +84,9 @@ export default function Drawer({ mobileOpen, onDrawerToggle }) {
                 justifyContent: 'center',
               }}
             >
-              <ExitToApp />
+              <Settings />
             </ListItemIcon>
-            <ListItemText primary="Logout" />
+            <ListItemText primary="Settings" />
           </ListItemButton>
         </ListItem>
       </List>

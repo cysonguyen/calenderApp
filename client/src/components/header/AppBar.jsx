@@ -24,7 +24,9 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/hooks/useUser';
+import Link from 'next/link';
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
   borderRadius: theme.shape.borderRadius,
@@ -66,13 +68,20 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 
 export default function AppBar({ onDrawerToggle }) {
   const [anchorEl, setAnchorEl] = useState(null);
-
+  const router = useRouter();
+  const [user] = useUser();
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    router.push('/login');
   };
 
   return (
@@ -113,7 +122,7 @@ export default function AppBar({ onDrawerToggle }) {
             aria-haspopup="true"
             aria-expanded={Boolean(anchorEl) ? 'true' : undefined}
           >
-            <Avatar sx={{ width: 32, height: 32 }}>U</Avatar>
+            <Avatar sx={{ width: 32, height: 32 }}>{user?.username[0].toUpperCase()}</Avatar>
           </IconButton>
         </Box>
         <Menu
@@ -129,10 +138,12 @@ export default function AppBar({ onDrawerToggle }) {
             <ListItemIcon>
               <Settings fontSize="small" />
             </ListItemIcon>
-            Settings
+            <Link href="/account" style={{ textDecoration: 'none', color: 'inherit' }}>
+              {user?.full_name}
+            </Link>
           </MenuItem>
           <Divider />
-          <MenuItem>
+          <MenuItem onClick={handleLogout}>
             <ListItemIcon>
               <Logout fontSize="small" />
             </ListItemIcon>

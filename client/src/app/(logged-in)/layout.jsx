@@ -1,17 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
-import AppBar from '@/components/AppBar';
-import Drawer from '@/components/Drawer';
+import AppBar from '@/components/header/AppBar';
+import Drawer from '@/components/side-bar/Drawer';
 import '../globals.css';
 
 export default function ProtectedLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-
+  
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+    }
+  }, []);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -21,7 +28,7 @@ export default function ProtectedLayout({ children }) {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          paddingTop: 8,
           width: { sm: `calc(100% - 240px)` },
         }}
       >

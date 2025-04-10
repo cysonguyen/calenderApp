@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -9,14 +9,48 @@ import {
   Typography,
   Container,
   Paper,
+  Snackbar,
+  Alert,
 } from '@mui/material';
+import Link from 'next/link';
+import { useMutation } from '@tanstack/react-query';
+import { login } from '@/app/api/client/account';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [openNotification, setOpenNotification] = useState(false);
+  const [message, setMessage] = useState('');
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
   });
+
+  const { mutate: submitLogin, isLoading } = useMutation({
+    mutationFn: async (formData) => {
+      const response = await login(formData);
+      if (response?.token) {
+        const { token, user } = response
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        fetch('/api/store-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token }),
+        });
+        router.push('/dashboard');
+      } else {
+        setOpenNotification(true);
+        setMessage(response?.errors[0] ?? 'Something went wrong');
+      }
+      return response;
+    },
+  });
+
+  const handleCloseNotification = () => {
+    setOpenNotification(false);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,16 +60,20 @@ export default function LoginPage() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = useCallback((e) => {
     e.preventDefault();
-    // Here you would typically make an API call to authenticate
-    console.log('Login attempt:', formData);
-    // For demo purposes, we'll just redirect to dashboard
-    router.push('/dashboard');
-  };
+    submitLogin(formData);
+  }, [formData]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
 
   return (
-    <Container component="main" maxWidth="xs">
+    <Container component="main" maxWidth="xs" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
       <Box
         sx={{
           marginTop: 8,
@@ -62,12 +100,11 @@ export default function LoginPage() {
               margin="normal"
               required
               fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
+              id="username"
+              label="Username"
+              name="username"
               autoFocus
-              value={formData.email}
+              value={formData.username}
               onChange={handleChange}
             />
             <TextField
@@ -78,7 +115,6 @@ export default function LoginPage() {
               label="Password"
               type="password"
               id="password"
-              autoComplete="current-password"
               value={formData.password}
               onChange={handleChange}
             />
@@ -86,12 +122,19 @@ export default function LoginPage() {
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ mt: 3, mb: 1 }}
+              loading={isLoading}
             >
               Sign In
             </Button>
+            <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
+              Don't have an account? <Link href="/register">Sign up</Link>
+            </Typography>
           </Box>
         </Paper>
+        <Snackbar anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} open={openNotification} autoHideDuration={3000} onClose={handleCloseNotification}>
+          <Alert severity="error">{message}</Alert>
+        </Snackbar>
       </Box>
     </Container>
   );
