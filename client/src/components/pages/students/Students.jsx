@@ -40,6 +40,8 @@ export default function Students() {
     const [openNotification, setOpenNotification] = useState(false);
 
     const handleClose = useCallback((payload) => {
+        console.log('payload', payload);
+        
         if (payload) {
             setMessage(payload);
             setOpenNotification(true);

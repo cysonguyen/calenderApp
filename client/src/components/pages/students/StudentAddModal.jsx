@@ -139,7 +139,7 @@ export default function StudentAddModal({ open, onClose }) {
                     gap: 2,
                     mt: 2,
                 }}>
-                    <Button variant="contained" color="secondary" disabled={isLoading} onClick={handleClose}>Cancel</Button>
+                    <Button variant="contained" color="secondary" disabled={isLoading} onClick={() => handleClose()}>Cancel</Button>
                     <Button variant="contained" color="primary" disabled={isLoading} loading={isLoading} onClick={handleSave}>Add</Button>
                 </Box>
             </Paper>
