@@ -1,5 +1,6 @@
 import { ROLES } from "@/utils/const";
 import { Modal, Box, Typography, Paper, TextField, Button } from "@mui/material";
+import dayjs from "dayjs";
 import { useState, useCallback } from "react";
 
 export default function EditInfoModal({ open, onClose, onSave, user }) {
@@ -16,6 +17,8 @@ export default function EditInfoModal({ open, onClose, onSave, user }) {
         onClose?.();
         setInfo(user);
     }, [onClose]);
+
+    console.log(info);
 
     return (
         <Modal
@@ -58,7 +61,7 @@ export default function EditInfoModal({ open, onClose, onSave, user }) {
                             InputLabelProps={{
                                 shrink: true,
                             }}
-                            value={info?.birth_day ?? ''}
+                            value={info?.birth_day ? dayjs(info?.birth_day).format('YYYY-MM-DD') : ''}
                             onChange={(e) => handleChange('birth_day', e.target.value)}
                         />
                     </Box>
