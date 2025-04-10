@@ -20,7 +20,7 @@ export default function StudentDetail({ studentId }) {
                     <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
                         <Typography variant="body2">Full name: {user?.full_name ?? 'N/A'}</Typography>
                         <Typography variant="body2">Email: {user?.email ?? 'N/A'}</Typography>
-                        <Typography variant="body2">Date of birth: {dayjs(user?.birth_day).format('DD/MM/YYYY') ?? 'N/A'}</Typography>
+                        <Typography variant="body2">Date of birth: {user?.birth_day ? dayjs(user?.birth_day).format('DD/MM/YYYY') : 'N/A'}</Typography>
                         {
                             user?.role === ROLES.TEACHER && (
                                 <>

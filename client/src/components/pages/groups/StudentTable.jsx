@@ -79,7 +79,7 @@ function rowTransform(rows) {
     return rows?.map((row) => {
         return {
             ...row,
-            birth_day: dayjs(row.birth_day).format('DD/MM/YYYY'),
+            birth_day: row.birth_day ? dayjs(row.birth_day).format('DD/MM/YYYY') : 'N/A',
         }
     })
 }
