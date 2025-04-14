@@ -6,7 +6,8 @@ const { removeNullOrUndefined, compareIdsArray } = require("../utils/helper");
 const bcrypt = require("bcryptjs/dist/bcrypt");
 const sequelize = require("../config/sequelize");
 const SSEService = require("../lib/sseService");
-const pageSize = 10;
+const dayjs = require("dayjs");
+const PAGE_SIZE = 10;
 
 module.exports = {
   async getAccountInfo(req, res) {
@@ -31,7 +32,7 @@ module.exports = {
 
   async getAccountInfoByQuery(req, res) {
     try {
-      const { id, full_name, mssv, email, username, role, page = 1 } = req.query;
+      const { id, full_name, mssv, email, username, role, page = 0, pageSize = PAGE_SIZE } = req.query;
       const query = removeNullOrUndefined({ id, full_name, mssv, email, username, role });
       const whereClause = {};
       if (query.id) whereClause.id = query.id;
@@ -41,14 +42,19 @@ module.exports = {
       if (query.username) whereClause.username = { [Op.like]: `%${query.username}%` };
       if (query.role) whereClause.role = query.role;
 
-      const users = await User.findAll({
+      const users = await User.findAndCountAll({
         where: whereClause,
         attributes: { exclude: ["password"] },
-        limit: pageSize,
-        offset: (page - 1) * pageSize,
+        limit: Number(pageSize),
+        offset: (Number(page)) * Number(pageSize),
       });
 
-      res.status(200).json(users);
+      res.status(200).json({
+        users: users.rows,
+        total: users.count,
+        page,
+        pageSize,
+      });
     } catch (error) {
       console.log(error);
       return res.status(500).json({ errors: [error.message] });
@@ -299,17 +305,22 @@ module.exports = {
 
   async getGroupByQuery(req, res) {
     try {
-      const { name, page = 1, id } = req.query;
+      const { name, page = 0, id, pageSize = PAGE_SIZE } = req.query;
       const query = removeNullOrUndefined({ name, id });
       const whereClause = {};
       if (query.id) whereClause.id = query.id;
       if (query.name) whereClause.name = { [Op.like]: `%${query.name}%` };
-      const groups = await Group.findAll({
+      const groups = await Group.findAndCountAll({
         where: whereClause,
-        limit: pageSize,
-        offset: (page - 1) * pageSize,
+        limit: Number(pageSize),
+        offset: (Number(page)) * Number(pageSize),
       });
-      res.status(200).json(groups);
+      res.status(200).json({
+        groups: groups.rows,
+        total: groups.count,
+        page,
+        pageSize,
+      });
     } catch (error) {
       console.log(error);
       return res.status(500).json({ errors: [error.message] });
@@ -403,15 +414,17 @@ module.exports = {
       const userEntries = await Promise.all(accounts.map(async (account) => {
         const password = account.password;
         const hashedPassword = await bcrypt.hash(password, 10);
-        return {
+        const birthDay = account.birth_day ? dayjs(account.birth_day).format("YYYY-MM-DD") : null;
+        const data = {
           full_name: account.full_name,
           username: account.username,
           email: account.email,
           mssv: account.mssv,
-          birth_day: account.birth_day,
+          birth_day: birthDay,
           password: hashedPassword,
           role: ROLES.STUDENT,
-        };
+        }
+        return removeNullOrUndefined(data);
       }));
       const result = await User.bulkCreate(userEntries);
 
