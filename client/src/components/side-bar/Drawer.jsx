@@ -25,7 +25,7 @@ const drawerWidth = 240;
 
 const menuItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
-  { text: 'Calendar', icon: <CalendarToday />, path: '/calendar' },
+  { text: 'Schedules', icon: <CalendarToday />, path: '/schedules' },
   { text: 'Groups', icon: <People />, path: '/groups' },
   { text: 'Students', icon: <People />, path: '/students' },
 ];

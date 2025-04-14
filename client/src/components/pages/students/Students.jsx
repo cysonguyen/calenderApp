@@ -5,6 +5,7 @@ import StudentTable from "../groups/StudentTable";
 import { useRouter } from "next/navigation";
 import StudentAddModal from "./StudentAddModal";
 import { useState, useCallback } from "react";
+import StudentImportModal from "./StudentImportModal";
 const columns = (router) => {
     return [
         { field: 'full_name', headerName: 'Full name', flex: 1, minWidth: 150 },
@@ -33,15 +34,14 @@ const columns = (router) => {
 export default function Students() {
     const router = useRouter();
     const [openAddStudentModal, setOpenAddStudentModal] = useState(false);
+    const [openImportStudentModal, setOpenImportStudentModal] = useState(false);
     const [message, setMessage] = useState({
         status: 'success',
         message: '',
     });
     const [openNotification, setOpenNotification] = useState(false);
 
-    const handleClose = useCallback((payload) => {
-        console.log('payload', payload);
-        
+    const handleCloseAddModal = useCallback((payload) => {
         if (payload) {
             setMessage(payload);
             setOpenNotification(true);
@@ -53,13 +53,28 @@ export default function Students() {
         }
     }, []);
 
+    const handleCloseImportModal = useCallback((payload) => {
+        if (payload) {
+            setMessage(payload);
+            setOpenNotification(true);
+            if (payload.status === 'success') {
+                setOpenImportStudentModal(false);
+            }
+        } else {
+            setOpenImportStudentModal(false);
+        }
+    }, []);
+
     return (
         <Box component="main" sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Paper sx={{ p: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="h4">Students</Typography>
-                        <Button variant="contained" color="primary" onClick={() => setOpenAddStudentModal(true)}>Add Student</Button>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                            <Button variant="contained" color="primary" onClick={() => setOpenImportStudentModal(true)}>Import</Button>
+                            <Button variant="contained" color="primary" onClick={() => setOpenAddStudentModal(true)}>Add</Button>
+                        </Box>
                     </Box>
                     <StudentTable
                         rows={null}
@@ -71,7 +86,11 @@ export default function Students() {
             </Paper>
             <StudentAddModal
                 open={openAddStudentModal}
-                onClose={handleClose}
+                onClose={handleCloseAddModal}
+            />
+            <StudentImportModal
+                open={openImportStudentModal}
+                onClose={handleCloseImportModal}
             />
             <Snackbar onClose={() => setOpenNotification(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} open={openNotification} autoHideDuration={3000}>
                 <Alert severity={message.status}>{message.message}</Alert>

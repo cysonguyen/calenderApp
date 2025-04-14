@@ -42,6 +42,7 @@ export default function StudentAddModal({ open, onClose }) {
     }, [info, createStudent]);
 
     const handleClose = useCallback((data) => {
+        console.log(data);
         onClose?.(data);
         setInfo({
             full_name: '',
@@ -55,7 +56,7 @@ export default function StudentAddModal({ open, onClose }) {
     return (
         <Modal
             open={open}
-            onClose={handleClose}
+            onClose={() => handleClose()}
         >
             <Paper sx={{
                 position: 'absolute',

@@ -1,7 +1,6 @@
 'use client';
-import { ROLES } from "@/utils/const";
+import { BASE_URL, ROLES } from "@/utils/const";
 import axios from "../index";
-const BASE_URL = "http://localhost:5000/api";
 
 export async function login(formData) {
     return await axios.post(`${BASE_URL}/auth/login`, formData);
@@ -45,7 +44,7 @@ export async function createGroupApi(group) {
     return await axios.post(`${BASE_URL}/account/group`, group);
 };
 
-export async function getStudentsApi({ id, full_name, email, mssv, username, role = ROLES.STUDENT }) {
+export async function getStudentsApi({ id, full_name, email, mssv, username, role = ROLES.STUDENT, page, pageSize }) {
     return await axios.get(`${BASE_URL}/account/info`, {
         params: {
             role,
@@ -53,7 +52,9 @@ export async function getStudentsApi({ id, full_name, email, mssv, username, rol
             full_name,
             email,
             mssv,
-            username
+            username,
+            page,
+            pageSize
         }
     });
 };
@@ -61,4 +62,9 @@ export async function getStudentsApi({ id, full_name, email, mssv, username, rol
 export async function createStudentApi(student) {
     return await axios.post(`${BASE_URL}/account/student`, student);
 };
+
+export async function importStudentsApi(data) {
+    return await axios.post(`${BASE_URL}/account/import`, data);
+};
+
 

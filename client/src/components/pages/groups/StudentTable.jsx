@@ -1,40 +1,68 @@
 import { DataGrid } from "@mui/x-data-grid";
 import { useQuery } from "@tanstack/react-query";
 import { getStudentsApi } from "@/app/api/client/account";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import dayjs from "dayjs";
 import { Box, MenuItem, Select, TextField } from "@mui/material";
 import { useDebounce } from "@/hooks/useDebounce";
 const pageSize = 20;
 
 export default function StudentTable({ isLoading, rows, initialColumns, selectedUsers, onSelect, allowAdd = true, isFetch = false, allowSelect = true }) {
-    const [query, setQuery] = useState({});
-    const { data: users, isLoading: isLoadingUsers } = useQuery({
+    const [page, setPage] = useState(0);
+    const [query, setQuery] = useState({ page, pageSize });
+    const { data, isLoading: isLoadingUsers } = useQuery({
         queryKey: ['users', query],
         queryFn: () => getStudentsApi(query),
+        keepPreviousData: true,
         enabled: allowAdd || isFetch,
     });
+    console.log(query);
+
     const [search, setSearch] = useState('');
     const [type, setType] = useState('full_name');
     const debouncedSearch = useDebounce(search, 500);
 
+    console.log('selectedUsers', selectedUsers);
+
+
     useEffect(() => {
         if (allowAdd) {
+            console.log('call');
+
             setQuery({
+                page,
+                pageSize,
                 [type]: debouncedSearch,
             });
         }
     }, [debouncedSearch]);
+
 
     const loading = useMemo(() => {
         if (allowAdd) return isLoadingUsers;
         return isLoading;
     }, [isLoading, isLoadingUsers, allowAdd]);
 
-    const rowsData = useMemo(() => {
-        const data = rows ? rows : users;
-        return rowTransform(data);
-    }, [rows, users]);
+    const { rowsData, totalRows } = useMemo(() => {
+        if (rows) return {
+            rowsData: rowTransform(rows),
+            totalRows: rows.length
+        };
+        const users = data?.users;
+        return {
+            rowsData: rowTransform(users),
+            totalRows: data?.total
+        };
+    }, [rows, data]);
+
+    const onPageChange = useCallback((newPage) => {
+        setPage(newPage.page);
+        setQuery((prev) => ({
+            ...prev,
+            page: newPage.page,
+            pageSize: newPage.pageSize
+        }));
+    }, []);
 
 
     return (
@@ -59,6 +87,8 @@ export default function StudentTable({ isLoading, rows, initialColumns, selected
                 </Select>
             </Box>
             <DataGrid
+                paginationMode="server"
+                rowCount={totalRows}
                 loading={loading}
                 rows={rowsData}
                 columns={initialColumns}
@@ -66,8 +96,12 @@ export default function StudentTable({ isLoading, rows, initialColumns, selected
                 disableRowSelectionOnClick
                 rowSelectionModel={selectedUsers}
                 onRowSelectionModelChange={(newRowSelectionModel) => onSelect?.(newRowSelectionModel)}
-                pageSizeOptions={pageSize}
-
+                pageSizeOptions={[pageSize]}
+                paginationModel={{
+                    page,
+                    pageSize
+                }}
+                onPaginationModelChange={onPageChange}
             />
         </Box>
     )

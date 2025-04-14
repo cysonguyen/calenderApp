@@ -3,7 +3,7 @@
 import { Box, Paper, Typography, TextField, Button, TextareaAutosize, Snackbar, Alert, Modal } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getGroupByIdApi } from "@/app/api/client/account";
-import { useState, useMemo, useCallback } from "react";;
+import { useState, useMemo, useCallback, startTransition } from "react";;
 import { useRouter } from "next/navigation";
 import Loading from "@/components/common/loading";
 import StudentTable from "./StudentTable";
@@ -79,11 +79,14 @@ export default function GroupDetail({ groupId }) {
                 message: 'Updated success',
             });
             if (groupId === 'add') {
-                router.push(`/groups/${res.id}`);
+                startTransition(() => {
+                    router.push(`/groups/${res.id}`);
+                });
             } else {
-                queryClient.invalidateQueries({ queryKey: ['groups', groupId] });
+                console.log('call');
+                setIsOpenEditModal(false);
+                queryClient.invalidateQueries({ queryKey: ['group', groupId] });
             }
-            setIsOpenEditModal(false);
         } else {
             setOpenNotification(true);
             setMessage({
@@ -165,8 +168,9 @@ export default function GroupDetail({ groupId }) {
                 <Alert severity={message.status}>{message.message}</Alert>
             </Snackbar>
             <Modal open={isOpenEditModal} onClose={() => setIsOpenEditModal(false)}>
+
                 <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', maxWidth: '900px', width: '100%', bgcolor: 'background.paper', boxShadow: 24, p: 4 }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: '80vh', overflow: 'auto' }}>
                         <Typography variant="h6">Change student in group</Typography>
                         <StudentTable
                             rows={null}
@@ -175,14 +179,16 @@ export default function GroupDetail({ groupId }) {
                             onSelect={onChangeSelectedUsers}
                             allowAdd={true}
                         />
-                        <Box sx={{
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            gap: 2,
-                        }}>
-                            <Button variant="contained" color="secondary" onClick={() => setIsOpenEditModal(false)}>Cancel</Button>
-                            <Button variant="contained" color="primary" onClick={handleSaveGroup}>Submit</Button>
-                        </Box>
+                    </Box>
+                    <Box sx={{
+                        mt: 2,
+                        mr: 2,
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: 2,
+                    }}>
+                        <Button variant="contained" color="secondary" onClick={() => setIsOpenEditModal(false)}>Cancel</Button>
+                        <Button variant="contained" color="primary" onClick={handleSaveGroup}>Submit</Button>
                     </Box>
                 </Box>
             </Modal>
