@@ -8,7 +8,7 @@ import '../globals.css';
 
 export default function ProtectedLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  
+
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -33,6 +33,11 @@ export default function ProtectedLayout({ children }) {
         }}
       >
         {children}
+        <br />
+        <br />
+
+
+
       </Box>
     </Box>
   );
