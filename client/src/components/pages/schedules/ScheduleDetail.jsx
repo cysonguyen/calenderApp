@@ -106,7 +106,7 @@ export default function ScheduleDetail({ scheduleId }) {
         setSelectedUsers(users);
     }, [])
 
-    
+
 
     const handleSave = useCallback(() => {
         console.log({ ...schedule, userIds: structuredClone(selectedUsers) });
