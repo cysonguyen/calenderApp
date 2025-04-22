@@ -11,11 +11,38 @@ module.exports = {
     async getSchedulesByUserId(req, res) {
         try {
             const { userId } = req.params;
-            const { startTime = new Date(), endTime = new Date('2099-12-31'), page = 1 } = req.query;
+            const { startTime = new Date(), endTime = new Date(), page = 1, view = 'list' } = req.query;
             if (!userId) {
                 return res.status(400).json({ errors: ["Missing userId"] });
             }
-            let schedules = await Schedule.findAll({
+            console.log(startTime, endTime);
+            const isCalendarView = view === 'calendar';
+
+            let whereCondition = {
+                [Op.or]: [
+                    { start_time: { [Op.between]: [startTime, endTime] } },
+                    { end_time: { [Op.between]: [startTime, endTime] } },
+                    {
+                        start_time: { [Op.lte]: startTime },
+                        end_time: { [Op.gte]: endTime },
+                    }
+                ],
+            };
+
+            if (isCalendarView) {
+                whereCondition = {
+                    [Op.and]: [
+                        {
+                            [Op.or]: [
+                                { when_expires: { [Op.gt]: startTime } },
+                                { when_expires: null },
+                            ],
+                        }
+                    ]
+                };
+            }
+
+            let queryOptions = {
                 include: [
                     {
                         model: User,
@@ -23,22 +50,18 @@ module.exports = {
                         through: { attributes: [] },
                     },
                 ],
-                where: {
-                    [Op.or]: [
-                        { start_time: { [Op.between]: [startTime, endTime] } },
-                        { end_time: { [Op.between]: [startTime, endTime] } },
-                        {
-                            start_time: { [Op.lte]: startTime },
-                            end_time: { [Op.gte]: endTime },
-                        },
-                    ],
-                },
-                limit: pageSize,
-                offset: (page - 1) * pageSize,
-            });
+                where: whereCondition,
+            };
+
+            if (!isCalendarView) {
+                queryOptions.limit = pageSize;
+                queryOptions.offset = (page - 1) * pageSize;
+            }
+
+            let schedules = await Schedule.findAll(queryOptions);
             schedules = await Promise.all(schedules.map(async (schedule) => {
                 const scheduleData = schedule.get({ plain: true });
-                const meetingCycles = await getMeetingCyclesByQuery(schedule.id, startTime);
+                const meetingCycles = await getMeetingCyclesByQuery(schedule.id, startTime, endTime);
                 scheduleData.meetingCycles = meetingCycles;
                 return scheduleData;
             }));
@@ -90,6 +113,7 @@ module.exports = {
                 interval,
                 intervalCount,
                 userIds,
+                when_expires
             } = req.body;
             if (
                 !title ||
@@ -117,8 +141,9 @@ module.exports = {
                     is_repeat,
                     interval,
                     intervalCount,
+                    when_expires
                 });
-                const scheduleUserEntries = userIds.map((userId) => ({
+                const scheduleUserEntries = [...userIds, authorUserId].map((userId) => ({
                     schedule_id: schedule.id,
                     user_id: userId,
                 }));
@@ -155,7 +180,7 @@ module.exports = {
         try {
             const { authorUserId } = req.params;
             const { scheduleId, userIds } = req.body;
-            const payload = removeNullOrUndefined(pick(req.body, ["title", "description", "start_time", "end_time", "is_repeat", "interval", "intervalCount"]));
+            const payload = removeNullOrUndefined(pick(req.body, ["title", "description", "start_time", "end_time", "is_repeat", "interval", "intervalCount", "when_expires"]));
             if (!req.body.scheduleId) {
                 return res.status(400).json({ errors: ["Missing scheduleId"] });
             }
@@ -231,11 +256,22 @@ module.exports = {
             if (!scheduleId) {
                 return res.status(400).json({ errors: ["Missing scheduleId"] });
             }
+            const schedule = await Schedule.findByPk(scheduleId, {
+                include: {
+                    model: User,
+                    through: { attributes: [] },
+                },
+            });
+            if (!schedule) {
+                return res.status(400).json({ errors: ["Schedule not found"] });
+            }
+
+
             await sequelize.transaction(async (transaction) => {
                 await Schedule.destroy({ where: { id: scheduleId }, transaction });
                 await ScheduleUser.destroy({ where: { schedule_id: scheduleId }, transaction });
             });
-            res.status(200).json({});
+            res.status(200).json({ scheduleId });
         } catch (error) {
             console.log(error);
             return res.status(500).json({ errors: [error.message] });

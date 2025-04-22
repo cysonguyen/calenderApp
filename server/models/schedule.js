@@ -12,6 +12,7 @@ const Schedule = sequelize.define(
     interval: { type: DataTypes.STRING(50), allowNull: true },
     intervalCount: { type: DataTypes.INTEGER, allowNull: true },
     cycle_edited: { type: DataTypes.TEXT, allowNull: true },
+    when_expires: { type: DataTypes.DATE, allowNull: true },
   },
   { timestamps: true }
 );

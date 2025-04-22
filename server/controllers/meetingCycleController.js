@@ -1,7 +1,7 @@
 const { Meeting, MeetingCycle, Schedule } = require("../models");
 const { getMeetingCycles, replaceExistCycle } = require("../utils/object/schedule");
-const { Op } = require("sequelize");
-const pageSize = 10;
+const { Op, or } = require("sequelize");
+const MAX_SIZE_MONTH = 31;
 
 module.exports = {
     async createMeetingCycle(schedule_id, start_time, end_time, cycle_index, transaction = null) {
@@ -17,7 +17,7 @@ module.exports = {
         }
     },
 
-    async getMeetingCyclesByQuery(schedule_id, start_time = new Date(), end_time = new Date('2099-12-31')) {
+    async getMeetingCyclesByQuery(schedule_id, start_time = new Date(), end_time = new Date()) {
         try {
             const schedule = await Schedule.findByPk(schedule_id);
             if (!schedule) {
@@ -27,10 +27,10 @@ module.exports = {
             meetingCycles = await MeetingCycle.findAll({
                 include: [{
                     model: Meeting,
-                    limit: pageSize
+                    limit: MAX_SIZE_MONTH
                 }],
                 where: { schedule_id, start_time: { [Op.between]: [start_time, end_time] } }, order: [['start_time', 'ASC']],
-                limit: pageSize
+                limit: MAX_SIZE_MONTH
             });
 
             const latestCycle = meetingCycles[0];
@@ -41,14 +41,14 @@ module.exports = {
                 start_time: latestCycleStartTime,
                 end_time: latestCycleEndTime,
             }
-            const cyclesInFuture = getMeetingCycles(futureSchedule, start_time, end_time, pageSize - meetingCycles.length);
+            const cyclesInFuture = getMeetingCycles(futureSchedule, start_time, end_time, MAX_SIZE_MONTH - meetingCycles.length);
             const { cycle_edited } = schedule;
             const cycleIdsEdited = JSON.parse(cycle_edited || "[]");
             meetingCycles = [...meetingCycles, ...cyclesInFuture];
             if (Array.isArray(cycleIdsEdited) && cycleIdsEdited.length > 0) {
                 const existCycle = await MeetingCycle.findAll({
                     where: { schedule_id, start_time: { [Op.gte]: start_time }, id: { [Op.in]: cycleIdsEdited } },
-                    limit: pageSize
+                    limit: MAX_SIZE_MONTH
                 });
                 meetingCycles = replaceExistCycle(existCycle, meetingCycles);
             }
