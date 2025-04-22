@@ -3,13 +3,13 @@
 import { DataGrid } from "@mui/x-data-grid";
 import { useQuery } from "@tanstack/react-query";
 import { getStudentsApi } from "@/app/api/client/account";
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, memo } from "react";
 import dayjs from "dayjs";
 import { Box, MenuItem, Select, TextField } from "@mui/material";
 import { useDebounce } from "@/hooks/useDebounce";
 const pageSize = 20;
 
-export default function StudentTable({ isLoading, rows, initialColumns, selectedUsers, onSelect, allowAdd = true, isFetch = false, allowSelect = true }) {
+const StudentTable = memo(function StudentTable({ isLoading, rows, initialColumns, selectedUsers, onSelect, allowAdd = true, isFetch = false, allowSelect = true }) {
     const [page, setPage] = useState(0);
     const [query, setQuery] = useState({ page, pageSize });
     const { data, isLoading: isLoadingUsers } = useQuery({
@@ -107,7 +107,9 @@ export default function StudentTable({ isLoading, rows, initialColumns, selected
             />
         </Box>
     )
-}
+})
+
+export default StudentTable;
 
 
 function rowTransform(rows) {

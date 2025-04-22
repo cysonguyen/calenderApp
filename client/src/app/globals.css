@@ -15,3 +15,49 @@
 body {
   color: rgb(var(--foreground-rgb));
 }
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.day-cell {
+  border: 1px solid #ccc;
+  padding: 4px;
+  min-height: 80px;
+  background: #fafafa;
+  border-radius: 4px;
+}
+
+.day-number {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.schedule-item {
+  background: #1976d2;
+  color: white;
+  padding: 2px 4px;
+  margin-top: 2px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.schedule-item-title {
+  font-weight: 600  ;
+}
+
+.weekdays-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+
+.weekday-cell {
+  text-align: center;
+  font-weight: bold;
+  padding: 6px 0;
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #ccc;
+}

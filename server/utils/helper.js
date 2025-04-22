@@ -25,8 +25,11 @@ function removeNullOrUndefined(obj) {
 
 function isOverlapTime(start_time, end_time, object) {
   const { start_time: object_start_time, end_time: object_end_time } = object;
-  return (dayjs(start_time).isBefore(dayjs(object_start_time)) && dayjs(end_time).isBefore(dayjs(object_start_time))) ||
-    (dayjs(start_time).isAfter(dayjs(object_end_time)) && dayjs(end_time).isAfter(dayjs(object_end_time)));
+
+  return (
+    dayjs(start_time).isBefore(dayjs(object_end_time)) &&
+    dayjs(end_time).isAfter(dayjs(object_start_time))
+  );
 }
 
 function isInsideTime(start_time, end_time, object) {

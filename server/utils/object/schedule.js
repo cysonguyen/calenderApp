@@ -27,7 +27,7 @@ function getMaxCycle(start_time, interval) {
         ? dayjs(start_time).add(maxCycle, interval) : dayjs(start_time).add(10, 'year');
     return maxTime;
 }
-function getMeetingCycles(schedule, start_time_query, end_time_query, limit) {
+function getMeetingCycles(schedule, start_time_query = new Date(), end_time_query = new Date(), limit) {
     const { start_time, end_time, interval, intervalCount, is_repeat } = schedule;
     const meetingCycles = [];
     const maxTime = end_time_query ? dayjs(end_time_query) : getMaxCycle(start_time, interval);
