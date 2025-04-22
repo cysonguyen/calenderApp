@@ -1,12 +1,13 @@
 'use client';
 
-import { createGroupApi, updateGroupApi } from "@/app/api/client/account";
+import { createGroupApi, deleteGroupApi, updateGroupApi } from "@/app/api/client/account";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 
 export const useGroupController = () => {
     const { create, isLoadingCreate } = useCreateGroup();
     const { update, isLoadingUpdate } = useUpdateGroup();
+    const { deleteGroup, isLoadingDelete } = useDeleteGroup()
 
     const createGroup = useCallback((payload) => {
         return create(payload);
@@ -16,7 +17,11 @@ export const useGroupController = () => {
         return update(payload);
     }, [update]);
 
-    return { createGroup, isLoadingCreate, updateGroup, isLoadingUpdate };
+    const deleteGroupManual = useCallback((payload) => {
+        return deleteGroup(payload);
+    }, [deleteGroup]);
+
+    return { createGroup, isLoadingCreate, updateGroup, isLoadingUpdate, deleteGroupManual, isLoadingDelete };
 };
 
 const useCreateGroup = () => {
@@ -40,4 +45,15 @@ export const useUpdateGroup = () => {
         },
     });
     return { update, isLoadingUpdate };
+}
+
+const useDeleteGroup = () => {
+    const { mutate: deleteGroup, isLoading: isLoadingDelete } = useMutation({
+        mutationFn: async ({ groupId, onFinish }) => {
+            const res = await deleteGroupApi(groupId);
+            onFinish?.(res);
+            return res;
+        },
+    });
+    return { deleteGroup, isLoadingDelete };
 }

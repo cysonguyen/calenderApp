@@ -4,12 +4,13 @@ import { getGroupByQueryApi } from '@/app/api/client/account';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUser } from '@/hooks/useUser';
 import { AddCircle, PlusOne } from '@mui/icons-material';
-import { Box, Paper, Typography, Button, ButtonGroup, TextField } from '@mui/material';
+import { Box, Paper, Typography, Button, ButtonGroup, TextField, Modal, Snackbar, Alert } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useGroupController } from './comon/group.controller';
 
 const pageSize = 20;
 
@@ -20,6 +21,17 @@ export default function Groups() {
     const debouncedSearch = useDebounce(search, 500);
     const [user, _update, isInitialized] = useUser();
     const router = useRouter();
+    const [selectedGroup, setSelectedGroup] = useState(null);
+    const [isOpenConfirm, setIsOpenConfirm] = useState(false)
+    const queryClient = useQueryClient();
+    const [openNotification, setOpenNotification] = useState(false);
+    const [message, setMessage] = useState({
+        status: '',
+        message: '',
+    });
+
+    const { deleteGroupManual, isLoadingDelete } = useGroupController()
+
     const { data, isLoading } = useQuery({
         queryKey: ['groups', query],
         queryFn: () => getGroupByQueryApi(query),
@@ -68,7 +80,7 @@ export default function Groups() {
                         <Button variant="contained" color="primary" onClick={() => router.push(`/groups/${params.row.rawId}`)}>
                             View
                         </Button>
-                        <Button variant="contained" color="error">
+                        <Button variant="contained" color="error" onClick={() => handleDeleteGroup(params.row.rawId)} >
                             Delete
                         </Button>
                     </ButtonGroup>
@@ -77,6 +89,42 @@ export default function Groups() {
         }
 
     ];
+
+    const onFinish = useCallback((res) => {
+        console.log('res', res);
+
+        if (!res.errors) {
+            setOpenNotification(true);
+            setMessage({
+                status: 'success',
+                message: 'Updated success',
+            });
+            setIsOpenConfirm(false);
+            queryClient.invalidateQueries({ queryKey: ['groups', query] });
+
+        } else {
+            setOpenNotification(true);
+            setMessage({
+                status: 'error',
+                message: res.errors[0],
+            });
+        }
+    }, [query]);
+
+    const onDeleGroup = useCallback(() => {
+        deleteGroupManual({ groupId: selectedGroup, onFinish })
+    }, [selectedGroup, onFinish])
+
+
+    const handleDeleteGroup = useCallback((groupId) => {
+        setSelectedGroup(groupId);
+        setIsOpenConfirm(true)
+    }, [])
+
+    const handleClose = useCallback(() => {
+        setSelectedGroup(null);
+        setIsOpenConfirm(false)
+    }, [])
 
     return (
         <Box component="main" sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -121,6 +169,38 @@ export default function Groups() {
                 />
 
             </Paper>
+            <Modal open={isOpenConfirm} onClose={handleClose}>
+                <Paper sx={{
+                    position: 'absolute',
+                    top: '40%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '50%',
+                    padding: 2,
+                }}>
+                    <Box>
+                        <Typography variant="h5" sx={{
+                            fontWeight: 'bold',
+                            mb: 2,
+                        }}>Delete Group</Typography>
+                        <Typography>
+                            This action will be undone. Are you sure to delete group?
+                        </Typography>
+                        <Box sx={{
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: 1,
+                            mt: 2,
+                        }}>
+                            <Button variant="contained" color="secondary" onClick={handleClose}>Cancel</Button>
+                            <Button variant="contained" color="error" onClick={onDeleGroup}>Delete</Button>
+                        </Box>
+                    </Box>
+                </Paper>
+            </Modal>
+            <Snackbar onClose={() => setOpenNotification(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} open={openNotification} autoHideDuration={3000}>
+                <Alert severity={message.status}>{message.message}</Alert>
+            </Snackbar>
         </Box>
     )
 }
