@@ -4,13 +4,14 @@ const sequelize = require("../config/sequelize");
 const Schedule = sequelize.define(
   "Schedule",
   {
+    author_id: { type: DataTypes.INTEGER, allowNull: false },
     title: { type: DataTypes.STRING(255), allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: true },
     start_time: { type: DataTypes.DATE, allowNull: false },
     end_time: { type: DataTypes.DATE, allowNull: false },
     is_repeat: { type: DataTypes.BOOLEAN, allowNull: false },
     interval: { type: DataTypes.STRING(50), allowNull: true },
-    intervalCount: { type: DataTypes.INTEGER, allowNull: true },
+    interval_count: { type: DataTypes.INTEGER, allowNull: true },
     cycle_edited: { type: DataTypes.TEXT, allowNull: true },
     when_expires: { type: DataTypes.DATE, allowNull: true },
   },

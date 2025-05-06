@@ -20,7 +20,7 @@ class SSEService {
     sseEmitter.on(`notify.${userID}`, sendEvent);
 
     const heartbeat = setInterval(() => {
-      res.write(": keep-alive\n\n");
+      res.write("data: keep-alive\n\n");
     }, 30000);
 
     res.on("close", () => {

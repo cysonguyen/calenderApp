@@ -18,8 +18,6 @@ export default function EditInfoModal({ open, onClose, onSave, user }) {
         setInfo(user);
     }, [onClose]);
 
-    console.log(info);
-
     return (
         <Modal
             open={open}

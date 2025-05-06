@@ -18,19 +18,13 @@ const StudentTable = memo(function StudentTable({ isLoading, rows, initialColumn
         keepPreviousData: true,
         enabled: allowAdd || isFetch,
     });
-    console.log(query);
 
     const [search, setSearch] = useState('');
     const [type, setType] = useState('full_name');
     const debouncedSearch = useDebounce(search, 500);
 
-    console.log('selectedUsers', selectedUsers);
-
-
     useEffect(() => {
         if (allowAdd) {
-            console.log('call');
-
             setQuery({
                 page,
                 pageSize,
@@ -38,7 +32,6 @@ const StudentTable = memo(function StudentTable({ isLoading, rows, initialColumn
             });
         }
     }, [debouncedSearch]);
-
 
     const loading = useMemo(() => {
         if (allowAdd) return isLoadingUsers;

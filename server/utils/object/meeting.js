@@ -1,41 +1,64 @@
-const { Meeting, MeetingCycle } = require("../../models");
-const { isOverlapTime, isInsideTime } = require("../helper");
 const dayjs = require("dayjs");
+const { timeRangesOverlap, isInsideTime } = require("../helper");
 
-async function validateAvailabilityMeeting(startTime, endTime, meetingCycleId, title, meetingId = null) {
-    const errors = [];
-    if (dayjs(startTime).isAfter(dayjs(endTime))) {
-        errors.push("Start time must be before end time");
-        return errors;
-    }
-    const meetingCycle = await MeetingCycle.findByPk(meetingCycleId, {
-        include: [{
-            model: Meeting
-        }]
-    });
-    if (meetingCycle) {
-        const meetingsData = meetingCycle.get({ plain: true });
-        const { Meetings: meetings } = meetingsData;
+async function validateAvailabilityMeeting(
+  startTime,
+  endTime,
+  meetingCycle,
+  title,
+  meetingId = null
+) {
+  const errors = [];
 
-        if (!isInsideTime(startTime, endTime, meetingsData)) {
-            errors.push("Meeting not available schedule time");
-            return errors;
-        }
-
-        for (const meeting of meetings.filter(meeting => meeting.id !== meetingId)) {
-            if (title && meeting.title == title) {
-                errors.push("Meeting title already exists");
-                return errors;
-            }
-            if (!isOverlapTime(startTime, endTime, meeting)) {
-                errors.push("Meeting not available time");
-                return errors;
-            }
-        }
-    }
+  if (dayjs(startTime).isAfter(dayjs(endTime))) {
+    errors.push("Start time must be before end time");
     return errors;
+  }
+
+  if (!meetingCycle) {
+    errors.push("Meeting cycle not found");
+    return errors;
+  }
+
+  const { Meetings: meetings } = meetingCycle;
+
+  if (
+    !isInsideTime(
+      startTime,
+      endTime,
+      meetingCycle.start_time,
+      meetingCycle.end_time
+    )
+  ) {
+    errors.push("Meeting not available schedule time");
+    return errors;
+  }
+
+  if (!meetings?.length > 0) return errors;
+  for (const meeting of meetings) {
+    if (meeting.id === meetingId) continue;
+
+    if (title && meeting.title === title) {
+      errors.push("Meeting title already exists");
+      return errors;
+    }
+
+    if (
+      timeRangesOverlap(
+        startTime,
+        endTime,
+        meeting.start_time,
+        meeting.end_time
+      )
+    ) {
+      errors.push("Meeting not available time");
+      return errors;
+    }
+  }
+
+  return errors;
 }
 
 module.exports = {
-    validateAvailabilityMeeting
+  validateAvailabilityMeeting,
 };

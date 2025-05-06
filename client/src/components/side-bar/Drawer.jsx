@@ -19,19 +19,33 @@ import {
   People,
   Settings,
   ChevronLeft,
+  Class,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/hooks/useUser';
+import { useMemo } from 'react';
+import { ROLES } from '@/utils/const';
 const drawerWidth = 240;
 
 const menuItems = [
-  { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
   { text: 'Schedules', icon: <CalendarToday />, path: '/schedules' },
-  { text: 'Groups', icon: <People />, path: '/groups' },
+  { text: 'Groups', icon: <Class />, path: '/groups' },
   { text: 'Students', icon: <People />, path: '/students' },
 ];
 
 export default function Drawer({ mobileOpen, onDrawerToggle }) {
   const router = useRouter();
+
+  const [user] = useUser();
+
+  const menuItemsFiltered = useMemo(() => {
+    if (user?.role !== ROLES.TEACHER) {
+      return menuItems.filter((item) => {
+        return item.path !== '/students';
+      });
+    }
+    return menuItems;
+  }, [user?.role]);
 
   const drawer = (
     <div>
@@ -45,7 +59,7 @@ export default function Drawer({ mobileOpen, onDrawerToggle }) {
       </Toolbar>
       <Divider />
       <List>
-        {menuItems.map((item) => (
+        {menuItemsFiltered.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
               onClick={() => router.push(item.path)}
@@ -72,6 +86,7 @@ export default function Drawer({ mobileOpen, onDrawerToggle }) {
       <List>
         <ListItem disablePadding>
           <ListItemButton
+            onClick={() => router.push('/account')}
             sx={{
               minHeight: 48,
               px: 2.5,

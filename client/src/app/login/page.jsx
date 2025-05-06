@@ -39,7 +39,7 @@ export default function LoginPage() {
           },
           body: JSON.stringify({ token }),
         });
-        router.push('/dashboard');
+        router.push('/schedules');
       } else {
         setOpenNotification(true);
         setMessage(response?.errors[0] ?? 'Something went wrong');
@@ -68,7 +68,7 @@ export default function LoginPage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      router.push('/dashboard');
+      router.push('/schedules');
     }
   }, [router]);
 

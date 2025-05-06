@@ -14,7 +14,6 @@ module.exports = {
       start_time: { type: Sequelize.DATE, allowNull: false },
       end_time: { type: Sequelize.DATE, allowNull: false },
       cycle_index: { type: Sequelize.INTEGER, allowNull: false },
-      meeting_id: { type: Sequelize.INTEGER, allowNull: false },
       createdAt: { type: Sequelize.DATE, allowNull: false },
       updatedAt: { type: Sequelize.DATE, allowNull: false }
     });
