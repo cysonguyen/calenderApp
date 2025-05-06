@@ -44,6 +44,10 @@ export async function createGroupApi(group) {
     return await axios.post(`${BASE_URL}/account/group`, group);
 };
 
+export async function deleteGroupApi(groupId) {
+    return await axios.delete(`${BASE_URL}/account/group/${groupId}` );
+};
+
 export async function getStudentsApi({ id, full_name, email, mssv, username, role = ROLES.STUDENT, page, pageSize }) {
     return await axios.get(`${BASE_URL}/account/info`, {
         params: {

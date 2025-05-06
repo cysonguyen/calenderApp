@@ -9,7 +9,7 @@ export default function StudentAddModal({ open, onClose }) {
         mutationFn: async (student) => {
             const res = await createStudentApi(student);
             if (!res.errors) {
-                queryClient.invalidateQueries({ queryKey: ['students'] });
+                queryClient.invalidateQueries({ queryKey: ['students'], exact: false });
                 handleClose({
                     status: 'success',
                     message: 'Updated success',

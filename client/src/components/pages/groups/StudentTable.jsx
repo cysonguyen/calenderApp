@@ -1,3 +1,5 @@
+'use client'
+
 import { DataGrid } from "@mui/x-data-grid";
 import { useQuery } from "@tanstack/react-query";
 import { getStudentsApi } from "@/app/api/client/account";
