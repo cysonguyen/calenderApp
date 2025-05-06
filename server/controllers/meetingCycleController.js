@@ -54,7 +54,8 @@ module.exports = {
             mergedCycles = mergedCycles.map(cycle => ({
                 ...cycle,
                 id: cycle.cycle_index,
-                original_id: cycle.id
+                original_id: cycle.id,
+                schedule_id
             }));
 
             return mergedCycles;
