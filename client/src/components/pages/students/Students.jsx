@@ -40,7 +40,6 @@ export default function Students() {
         message: '',
     });
     const [openNotification, setOpenNotification] = useState(false);
-
     const handleCloseAddModal = useCallback((payload) => {
         if (payload) {
             setMessage(payload);

@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import Loading from "@/components/common/loading";
 import StudentTable from "./StudentTable";
 import { useGroupController } from "./comon/group.controller";
+import { useUser } from "@/hooks/useUser";
+import { ROLES } from "@/utils/const";
 
 const columns = (router) => {
     return [
@@ -34,6 +36,7 @@ const columns = (router) => {
 }
 
 export default function GroupDetail({ groupId }) {
+    const [user] = useUser();
     const queryClient = useQueryClient();
     const [openNotification, setOpenNotification] = useState(false);
     const [isOpenEditModal, setIsOpenEditModal] = useState(false);
@@ -61,6 +64,10 @@ export default function GroupDetail({ groupId }) {
         return data;
     }, [groupId, data]);
 
+    const disabledEdit = useMemo(() => {
+        return user?.role !== ROLES.TEACHER;
+    }, [user?.role]);
+
     const [group, setGroup] = useState(initGroup);
     const [selectedUsers, setSelectedUsers] = useState(groupId === 'add' ? [] : group?.Users?.map((user) => user.id));
     const handleChangeDetail = useCallback((key, value) => {
@@ -83,7 +90,6 @@ export default function GroupDetail({ groupId }) {
                     router.push(`/groups/${res.id}`);
                 });
             } else {
-                console.log('call');
                 setIsOpenEditModal(false);
                 queryClient.invalidateQueries({ queryKey: ['group', groupId] });
             }
@@ -111,43 +117,62 @@ export default function GroupDetail({ groupId }) {
     return (
         <Box component="main" sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Paper sx={{ p: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Typography sx={{ fontWeight: 'bold' }} variant="h4">{groupId === 'add' ? 'Add Group' : 'Group Detail'}</Typography>
-                    <Button variant="contained" color="primary" size="small" onClick={handleSaveGroup}>
-                        Save
-                    </Button>
-                </Box>
+                {
+                    !disabledEdit && (
+                        <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                            <Typography sx={{ fontWeight: 'bold' }} variant="h4">{groupId === 'add' ? 'Add Group' : 'Group Detail'}</Typography>
+                            <Button variant="contained" color="primary" size="small" onClick={handleSaveGroup}>
+                                Save
+                            </Button>
+                        </Box>
+                    )
+                }
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                        <Typography sx={{ fontSize: '14px' }}>Group name:</Typography>
-                        <TextField
-                            sx={{ width: '50%' }}
-                            size="small"
-                            value={group?.name ?? ''}
-                            onChange={(e) => handleChangeDetail('name', e.target.value)}
-                        />
-
-                    </Box>
-                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                        <Typography sx={{ fontSize: '14px' }}>Description:</Typography>
-                        <TextareaAutosize
-                            minRows={3}
-                            value={group?.description ?? ''}
-                            onChange={(e) => handleChangeDetail('description', e.target.value)}
-                            style={{
-                                fontSize: '16px',
-                                padding: '10px',
-                                borderRadius: '5px',
-                                border: '1px solid #ccc',
-                            }}
-                        />
-                    </Box>
-
+                    {
+                        disabledEdit ? (
+                            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{group?.name}</Typography>
+                                {
+                                    group?.description && (
+                                        <Typography sx={{ fontStyle: 'italic' }}>{group?.description}</Typography>
+                                    )
+                                }
+                            </Box>
+                        ) : (
+                            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Typography sx={{ fontSize: '14px' }}>Group name:</Typography>
+                                <TextField
+                                    sx={{ width: '50%' }}
+                                    size="small"
+                                    value={group?.name ?? ''}
+                                    onChange={(e) => handleChangeDetail('name', e.target.value)}
+                                />
+                            </Box>
+                        )
+                    }
+                    {
+                        !disabledEdit && (
+                            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Typography sx={{ fontSize: '14px' }}>Description:</Typography>
+                                <TextareaAutosize
+                                    minRows={3}
+                                    value={group?.description ?? ''}
+                                    onChange={(e) => handleChangeDetail('description', e.target.value)}
+                                    style={{
+                                        fontSize: '16px',
+                                        padding: '10px',
+                                        borderRadius: '5px',
+                                        border: '1px solid #ccc',
+                                    }}
+                                />
+                            </Box>
+                        )
+                    }
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                             <Typography sx={{ fontSize: '14px' }}>{groupId === 'add' ? 'Select students' : 'Students in group'}</Typography>
                             {
-                                groupId !== 'add' && (
+                                groupId !== 'add' && !disabledEdit && (
                                     <Button variant="text" color="primary" size="small" onClick={() => setIsOpenEditModal(true)}>
                                         Add Student
                                     </Button>
@@ -160,6 +185,7 @@ export default function GroupDetail({ groupId }) {
                             selectedUsers={selectedUsers}
                             onSelect={onChangeSelectedUsers}
                             allowAdd={groupId === 'add'}
+                            allowSelect={!disabledEdit}
                         />
                     </Box>
                 </Box>

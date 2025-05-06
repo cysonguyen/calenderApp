@@ -11,10 +11,11 @@ import { ButtonGroup } from "@mui/material";
 import DateTimeRangeSelector from "@/components/resources/date-time/DateRange";
 import dayjs from "dayjs";
 import Calendar from "./Calender/Calender";
+import { ROLES } from "@/utils/const";
 
 const defaultDateRange = {
-    startTime: dayjs().toISOString(),
-    endTime: dayjs().add(7, 'day').toISOString()
+    startTime: dayjs().startOf('month').toISOString(),
+    endTime: dayjs().endOf('month').toISOString()
 };
 const pageSize = 20;
 const viewOptions = {
@@ -28,7 +29,7 @@ export default function Schedules() {
     const router = useRouter();
     const [page, setPage] = useState(0);
     const [dateRange, setDateRange] = useState(defaultDateRange);
-    const [view, setView] = useState(viewOptions.list);
+    const [view, setView] = useState(viewOptions.calendar);
     const [query, setQuery] = useState({
         dateRange: defaultDateRange,
         view: viewOptions.list
@@ -86,8 +87,6 @@ export default function Schedules() {
     }, [dateRange]);
 
     const handleDeleteSchedule = useCallback((scheduleId) => {
-        console.log(scheduleId);
-
         deleteSchedule(scheduleId);
     }, [deleteSchedule]);
 
@@ -118,9 +117,13 @@ export default function Schedules() {
                         <Button variant="contained" color="primary" onClick={() => router.push(`/schedules/${params.row.id}`)}>
                             View
                         </Button>
-                        <Button variant="contained" color="error" onClick={() => handleDeleteSchedule(params.row.id)}>
-                            Delete
-                        </Button>
+                        {
+                            user?.role === ROLES.TEACHER && (
+                                <Button variant="contained" color="error" onClick={() => handleDeleteSchedule(params.row.id)}>
+                                    Delete
+                                </Button>
+                            )
+                        }
                     </ButtonGroup>
                 )
             }
@@ -135,7 +138,6 @@ export default function Schedules() {
             return cycles;
         }
         schedules.forEach((schedule) => {
-            console.log(schedule);
             schedule.meetingCycles?.forEach((cycle) => {
                 cycles.push({
                     ...cycle,
@@ -177,20 +179,24 @@ export default function Schedules() {
             <Paper sx={{ p: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h4">Schedules</Typography>
-                    <Button variant="contained" color="primary" onClick={() => router.push('/schedules/add')}>Create</Button>
+                    {
+                        user?.role === ROLES.TEACHER && (
+                            <Button variant="contained" color="primary" onClick={() => router.push('/schedules/add')}>Create</Button>
+                        )
+                    }
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                         {
-                            view === viewOptions.list ? (
-                                <DateTimeRangeSelector initialValue={dateRange} onChange={handleChangeDateRange} />
-                            ) : (
-                                <TextField label="Select month" type="month" InputLabelProps={{
-                                    shrink: true,
-                                }} value={dateRange.startTime ? dayjs(dateRange.startTime).format('YYYY-MM') : ''} onChange={(e) => handleChangeDateRange('month', e.target.value)} />
+                            view !== viewOptions.list && (
+                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                    <TextField label="Select month" type="month" InputLabelProps={{
+                                        shrink: true,
+                                    }} value={dateRange.startTime ? dayjs(dateRange.startTime).format('YYYY-MM') : ''} onChange={(e) => handleChangeDateRange('month', e.target.value)} />
+                                    <Button variant="contained" color="inherit" size="large" onClick={handleSearch}>Search</Button>
+                                </Box>
                             )
                         }
-                        <Button variant="contained" color="inherit" size="large" onClick={handleSearch}>Search</Button>
                     </Box>
                     <ButtonGroup>
                         <Button variant="contained" color={view === viewOptions.calendar ? 'primary' : 'inherit'} size="large" onClick={() => handleChangeView(viewOptions.calendar)}>Calendar</Button>

@@ -3,6 +3,7 @@
 import { getGroupByQueryApi } from '@/app/api/client/account';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUser } from '@/hooks/useUser';
+import { ROLES } from '@/utils/const';
 import { AddCircle, PlusOne } from '@mui/icons-material';
 import { Box, Paper, Typography, Button, ButtonGroup, TextField } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -31,6 +32,10 @@ export default function Groups() {
             }
         }
     });
+
+    const disabledEdit = useMemo(() => {
+        return user?.role !== ROLES.TEACHER;
+    }, [user?.role]);
 
     useEffect(() => {
         setQuery({
@@ -68,9 +73,13 @@ export default function Groups() {
                         <Button variant="contained" color="primary" onClick={() => router.push(`/groups/${params.row.rawId}`)}>
                             View
                         </Button>
-                        <Button variant="contained" color="error">
-                            Delete
-                        </Button>
+                        {
+                            !disabledEdit && (
+                                <Button variant="contained" color="error">
+                                    Delete
+                                </Button>
+                            )
+                        }
                     </ButtonGroup>
                 )
             }
@@ -83,7 +92,11 @@ export default function Groups() {
             <Paper sx={{ p: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }} >
                     <Typography sx={{ fontWeight: 'bold' }} variant="h4">Groups</Typography>
-                    <Button onClick={() => router.push('/groups/add')} variant='contained' startIcon={<AddCircle />}>Add group</Button>
+                    {
+                        !disabledEdit && (
+                            <Button onClick={() => router.push('/groups/add')} variant='contained' startIcon={<AddCircle />}>Add group</Button>
+                        )
+                    }
                 </Box>
 
                 <TextField

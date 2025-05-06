@@ -14,9 +14,10 @@ const Calendar = ({ date, meetingCycles }) => {
         }
     }, [date])
 
-
+    console.log('meetingCycles', meetingCycles);
     const days = useMemo(() => {
         const days = [];
+        const currentDay = dayjs();
         for (let i = 0; i < startWeekday; i++) {
             days.push(<div key={`empty-${i}`} className="empty-cell" />);
         }
@@ -26,8 +27,11 @@ const Calendar = ({ date, meetingCycles }) => {
                 dayjs(cycle.start_time).isSame(currentDate, 'day')
             );
 
+
+            console.log('dayCycles', dayCycles);
+
             days.push(
-                <DayCell key={day} date={currentDate} cycles={dayCycles} />
+                <DayCell key={day} date={currentDate} cycles={dayCycles} isToday={currentDate.isSame(currentDay, 'day')} />
             );
         }
 

@@ -29,7 +29,7 @@ export default function RegisterPage() {
                 const { token, user } = response
                 localStorage.setItem('token', token);
                 localStorage.setItem('user', JSON.stringify(user));
-                router.push('/dashboard');
+                router.push('/schedules');
             } else {
                 setOpenNotification(true);
                 setMessage(response?.errors[0] ?? 'Something went wrong');
@@ -76,7 +76,7 @@ export default function RegisterPage() {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            router.push('/dashboard');
+            router.push('/schedules');
         }
     }, [router]);
 
