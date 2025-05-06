@@ -9,7 +9,9 @@
     "migrate": "sequelize-cli db:migrate",
     "migrate:undo": "sequelize-cli db:migrate:undo",
     "migrate:undo:all": "sequelize-cli db:migrate:undo:all",
-    "migrate:generate": "sequelize-cli migration:generate --name"
+    "migrate:generate": "sequelize-cli migration:generate --name",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +25,7 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.6.0",
+    "node-cron": "^3.0.3",
     "sequelize": "^6.32.1",
     "xlsx": "^0.18.5"
   },

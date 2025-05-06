@@ -6,7 +6,7 @@ const { ROLES } = require("../utils/const");
 router.post("/", authorizeValidUser(ROLES.TEACHER), createMeeting);
 router.put("/:meeting_id", authorizeValidUser(ROLES.TEACHER), updateMeeting);
 router.delete("/:meeting_id", authorizeValidUser(ROLES.TEACHER), deleteMeeting);
-router.get("/:meeting_id", authorizeValidUser(ROLES.TEACHER), getMeetingById);
-router.get("/list/:cycle_id", authorizeValidUser(ROLES.TEACHER), getMeetingsByCycleId);
+router.get("/:meeting_id", getMeetingById);
+router.get("/list/:cycle_id", getMeetingsByCycleId);
 
 module.exports = router;

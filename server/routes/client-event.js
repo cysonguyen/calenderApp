@@ -7,13 +7,13 @@ const router = express.Router();
 
 router.get("/register", async (req, res) => {
   try {
-    const userID = req.query.userID;
+    const userId = req.query.userId;
 
-    if (!userID) {
-      return res.status(400).json({ message: "Missing userID" });
+    if (!userId) {
+      return res.status(400).json({ message: "Missing userId" });
     }
 
-    const user = await User.findByPk(userID);
+    const user = await User.findByPk(userId);
 
     if (!user) {
       return res.status(400).json({ message: "User not found" });
@@ -22,7 +22,7 @@ router.get("/register", async (req, res) => {
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
-    SSEService.addClient(userID, res);
+    SSEService.addClient(userId, res);
 
     res.write("data: Connected successfully\n\n");
   } catch (error) {

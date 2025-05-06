@@ -1,5 +1,7 @@
 const { Notification } = require("../models");
 
+const pageSize = 10;
+
 module.exports = {
     getAllNotification: async (req, res) => {
         try {
@@ -7,30 +9,35 @@ module.exports = {
             if (!user_id) {
                 return res.status(400).json({ error: ["user_id is required"] });
             }
+            const { page = 1 } = req.query;
             const notifications = await Notification.findAll({
                 where: { user_id },
                 order: [["createdAt", "DESC"]],
+                limit: pageSize,
+                offset: (page - 1) * pageSize,
             });
-            res.status(200).json(notifications);
+            const total = await Notification.count({ where: { user_id } });
+            res.status(200).json({ notifications, total });
         } catch (error) {
             console.log(error);
             return res.status(500).json({ error: [error.message] });
         }
     },
 
-    updateNotification: async (req, res) => {
+    updateSeenNotification: async (req, res) => {
         try {
-            const { notification_id } = req.params;
-            const { is_seen } = req.body;
-            if (!notification_id) {
-                return res.status(400).json({ error: ["notification_id is required"] });
+            const { user_id } = req.params;
+            if (!user_id) {
+                return res.status(400).json({ error: ["user_id is required"] });
             }
-            const notification = await Notification.findByPk(notification_id);
-            if (!notification) {
+            const notifications = await Notification.findAll({
+                where: { user_id, seen: false },
+            });
+            if (!notifications.length) {
                 return res.status(404).json({ error: ["Notification not found"] });
             }
-            await notification.update({ seen: is_seen });
-            res.status(200).json(notification);
+            await Notification.update({ seen: true }, { where: { user_id } });
+            res.status(200).json({ message: "Notification updated" });
         } catch (error) {
             console.log(error);
             return res.status(500).json({ error: [error.message] });

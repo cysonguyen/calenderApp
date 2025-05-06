@@ -1,18 +1,17 @@
 const ROLES = {
   ADMIN: "ADMIN",
   TEACHER: "TEACHER",
-  STUDENT: "STUDENT"
+  STUDENT: "STUDENT",
 };
 
 const INTERVAL = {
-  DAY: "day",
-  WEEK: "week",
-  MONTH: "month",
-  YEAR: "year"
+  DAY: "DAY",
+  WEEK: "WEEK",
+  MONTH: "MONTH",
+  YEAR: "YEAR",
 };
 
 module.exports = {
   ROLES,
-  INTERVAL
+  INTERVAL,
 };
-
