@@ -13,13 +13,13 @@ module.exports = {
         email,
         password,
         full_name,
-        mssv,
+        msnv,
         level,
         work_place,
         birth_day,
       } = req.body;
 
-      const errors = validateCreateFields(req.body, ROLES.TEACHER);
+      const errors = validateCreateFields(req.body, ROLES.LEADER);
       if (errors.length > 0) {
         return res.status(400).json({ errors });
       }
@@ -39,11 +39,11 @@ module.exports = {
         email,
         password: hashedPassword,
         full_name,
-        mssv,
+        msnv,
         level,
         work_place,
         birth_day,
-        role: ROLES.TEACHER,
+        role: ROLES.LEADER,
       });
 
       const token = jwt.sign(

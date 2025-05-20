@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { Schedule, ScheduleUser, User, Notification } = require("../models");
+const { Schedule, ScheduleUser, User, Notification, UserGroup, Group } = require("../models");
 const { validateAvailabilitySchedule } = require("../utils/object/schedule");
 const {
   compareIdsArray,
@@ -9,6 +9,7 @@ const {
 const { getMeetingCyclesByQuery } = require("./meetingCycleController");
 const sequelize = require("../config/sequelize");
 const SSEService = require("../lib/sseService");
+const ScheduleGroup = require("../models/scheduleGroup");
 const pageSize = 10;
 
 module.exports = {
@@ -35,8 +36,8 @@ module.exports = {
           [Op.and]: [
             {
               [Op.or]: [
-                { when_expires: { [Op.gt]: startTime } },
-                { when_expires: null },
+                { when_expired: { [Op.gt]: startTime } },
+                { when_expired: null },
               ],
             },
           ],
@@ -59,6 +60,10 @@ module.exports = {
             through: { attributes: [] },
             attributes: { exclude: ["password"] },
           },
+          {
+            model: Group,
+            attributes: ["id", "name"],
+          },
         ],
         where: whereCondition,
         order: [["createdAt", "DESC"]],
@@ -79,6 +84,14 @@ module.exports = {
             endTime
           );
           scheduleData.meetingCycles = meetingCycles;
+
+          const acceptedIds = JSON.parse(schedule.accepted_ids);
+          if (acceptedIds.some((id) => id == userId)) {
+            scheduleData.status = "accepted";
+          } else {
+            scheduleData.status = "unaccepted";
+          }
+
           return scheduleData;
         })
       );
@@ -102,6 +115,10 @@ module.exports = {
             model: User,
             through: { attributes: [] },
             attributes: { exclude: ["password"] },
+          },
+          {
+            model: Group,
+            attributes: ["id", "name"],
           },
         ],
       });
@@ -136,18 +153,45 @@ module.exports = {
         interval,
         interval_count,
         userIds,
-        when_expires,
+        when_expired,
+        group_ids,
       } = req.body;
       if (
         !title ||
         !start_time ||
         !end_time ||
-        !is_repeat == null ||
-        !Array.isArray(userIds) ||
-        !userIds.length
+        !is_repeat == null
       ) {
         return res.status(400).json({ errors: ["Missing required fields"] });
       }
+
+      if (!group_ids && !userIds) {
+        return res.status(400).json({ errors: ["GroupIds or UserIds is required"] });
+      }
+
+      let userIdsToAdd = new Set();
+
+      if (userIds) {
+        if (!Array.isArray(userIds)) {
+          return res.status(400).json({ errors: ["UserIds is invalid"] });
+        }
+        userIds.forEach((userId) => userIdsToAdd.add(Number(userId)));
+      }
+
+      if (group_ids) {
+        if (!Array.isArray(group_ids)) {
+          return res.status(400).json({ errors: ["GroupIds is invalid"] });
+        }
+        const groupUsers = await UserGroup.findAll({
+          where: { group_id: { [Op.in]: group_ids } },
+        });
+        groupUsers.forEach((user) => userIdsToAdd.add(Number(user.user_id)));
+      }
+      if (userIdsToAdd.size < 1) {
+        return res.status(400).json({ errors: ["No users or groups selected"] });
+      }
+      userIdsToAdd.add(Number(authorUserId));
+      console.log("userIdsToAdd", userIdsToAdd);
       const errors = await validateAvailabilitySchedule(
         {
           start_time,
@@ -155,7 +199,7 @@ module.exports = {
           is_repeat,
           interval,
           interval_count: interval_count,
-          when_expires,
+          when_expired,
         },
         authorUserId
       );
@@ -173,16 +217,24 @@ module.exports = {
           is_repeat,
           interval,
           interval_count,
-          when_expires,
+          when_expired,
           author_id: authorUserId,
+          accepted_ids: `[${authorUserId}]`,
         });
-        const scheduleUserEntries = [...userIds, authorUserId].map(
+        const scheduleUserEntries = Array.from(userIdsToAdd).map(
           (userId) => ({
             schedule_id: schedule.id,
             user_id: userId,
           })
         );
         await ScheduleUser.bulkCreate(scheduleUserEntries, { transaction });
+        if (group_ids) {
+          const scheduleGroupEntries = group_ids.map((groupId) => ({
+            schedule_id: schedule.id,
+            group_id: groupId,
+          }));
+          await ScheduleGroup.bulkCreate(scheduleGroupEntries, { transaction });
+        }
       });
       schedule = await Schedule.findByPk(schedule.id, {
         include: {
@@ -193,14 +245,14 @@ module.exports = {
       });
 
       await Notification.bulkCreate(
-        [...userIds, authorUserId].map((userId) => ({
+        Array.from(userIdsToAdd).map((userId) => ({
           user_id: userId,
           message: `You have a new schedule ${title}`,
           seen: false,
         }))
       );
 
-      SSEService.sendToUsers([...userIds, authorUserId], {
+      SSEService.sendToUsers(Array.from(userIdsToAdd), {
         type: "SCHEDULE_UPDATE",
       });
 
@@ -214,7 +266,7 @@ module.exports = {
   async updateSchedule(req, res) {
     try {
       const { authorUserId } = req.params;
-      const { scheduleId, userIds } = req.body;
+      const { scheduleId, userIds, group_ids } = req.body;
       const payload = removeNullOrUndefined(
         pick(req.body, [
           "title",
@@ -224,17 +276,31 @@ module.exports = {
           "is_repeat",
           "interval",
           "interval_count",
-          "when_expires",
+          "when_expired",
         ])
       );
       if (!req.body.scheduleId) {
         return res.status(400).json({ errors: ["Missing scheduleId"] });
       }
+
+      let userIdsToAdd = new Set();
       if (userIds) {
         if (!Array.isArray(userIds) || userIds.length === 0) {
           return res.status(400).json({ errors: ["UserIds is invalid"] });
         }
+        userIds.forEach((userId) => userIdsToAdd.add(Number(userId)));
       }
+      if (group_ids) {
+        if (!Array.isArray(group_ids) || group_ids.length === 0) {
+          return res.status(400).json({ errors: ["GroupIds is invalid"] });
+        }
+        const groupUsers = await UserGroup.findAll({
+          where: { group_id: { [Op.in]: group_ids } },
+        });
+        groupUsers.forEach((user) => userIdsToAdd.add(Number(user.user_id)));
+      }
+      userIdsToAdd.add(Number(authorUserId));
+
       const existingSchedule = await Schedule.findByPk(scheduleId, {
         include: {
           model: User,
@@ -252,12 +318,14 @@ module.exports = {
       if (errors.length > 0) {
         return res.status(400).json({ errors });
       }
+
       const oldUserIds = existingSchedule.Users.map((user) => user.id);
       const { addedIds: addedUsers, removedIds: removedUsers } =
-        compareIdsArray(oldUserIds, userIds);
+        compareIdsArray(oldUserIds, userIdsToAdd.size > 0 ? Array.from(userIdsToAdd) : oldUserIds);
 
       await sequelize.transaction(async (transaction) => {
-        await Schedule.update(payload, {
+        const newAcceptedIds = JSON.parse(existingSchedule.accepted_ids).filter((id) => !removedUsers.includes(id));
+        await Schedule.update({ ...payload, accepted_ids: JSON.stringify(newAcceptedIds) }, {
           where: { id: scheduleId },
           transaction,
         });
@@ -276,6 +344,17 @@ module.exports = {
             },
             transaction,
           });
+        }
+        if (group_ids) {
+          await ScheduleGroup.destroy({
+            where: { schedule_id: scheduleId },
+            transaction,
+          });
+          const scheduleGroupEntries = group_ids.map((groupId) => ({
+            schedule_id: scheduleId,
+            group_id: groupId,
+          }));
+          await ScheduleGroup.bulkCreate(scheduleGroupEntries, { transaction });
         }
       });
 
@@ -336,6 +415,10 @@ module.exports = {
           where: { schedule_id: scheduleId },
           transaction,
         });
+        await ScheduleGroup.destroy({
+          where: { schedule_id: scheduleId },
+          transaction,
+        });
       });
       res.status(200).json({ scheduleId });
     } catch (error) {
@@ -343,4 +426,51 @@ module.exports = {
       return res.status(500).json({ errors: [error.message] });
     }
   },
+
+  async acceptSchedule(req, res) {
+    try {
+      const { scheduleId } = req.params;
+      const { userId } = req.body;
+      if (!scheduleId || !userId) {
+        return res.status(400).json({ errors: ["Missing scheduleId or userId"] });
+      }
+      const schedule = await Schedule.findByPk(scheduleId, {
+        include: {
+          model: User,
+          through: { attributes: [] },
+          attributes: { exclude: ["password"] },
+        },
+      });
+
+      const errors = await validateAvailabilitySchedule(
+        {
+          start_time: schedule.start_time,
+          end_time: schedule.end_time,
+          is_repeat: schedule.is_repeat,
+          interval: schedule.interval,
+          interval_count: schedule.interval_count,
+          when_expired: schedule.when_expired,
+        },
+        userId
+      );
+
+      if (errors.length > 0) {
+        return res.status(400).json({ errors });
+      }
+
+      if (!schedule) {
+        return res.status(400).json({ errors: ["Schedule not found"] });
+      }
+      const acceptedIds = JSON.parse(schedule.accepted_ids);
+      if (acceptedIds.includes(userId)) {
+        return res.status(400).json({ errors: ["User already accepted"] });
+      }
+      acceptedIds.push(userId);
+      await Schedule.update({ accepted_ids: `[${acceptedIds}]` }, { where: { id: scheduleId } });
+      return res.status(200).json({ scheduleId });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ errors: [error.message] });
+    }
+  }
 };

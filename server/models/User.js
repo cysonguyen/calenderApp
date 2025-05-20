@@ -8,7 +8,7 @@ const User = sequelize.define(
     username: { type: DataTypes.STRING(50), allowNull: false, unique: true },
     email: { type: DataTypes.STRING(50), allowNull: false, unique: true },
     password: { type: DataTypes.STRING(255), allowNull: false },
-    mssv: { type: DataTypes.STRING(255), allowNull: true },
+    msnv: { type: DataTypes.STRING(255), allowNull: true },
     level: { type: DataTypes.STRING(255), allowNull: true },
     work_place: { type: DataTypes.STRING(255), allowNull: true },
     birth_day: { type: DataTypes.DATE, allowNull: true },

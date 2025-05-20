@@ -23,10 +23,8 @@ function validateCreateFields(account, role) {
     if (!account.password) {
         errors.push("Password is required");
     }
-    if (role === ROLES.STUDENT) {
-        if (!account.mssv) {
-            errors.push("MSSV is required");
-        }
+    if (!account.msnv) {
+        errors.push("MSNV is required");
     }
 
     if (!account.email) {

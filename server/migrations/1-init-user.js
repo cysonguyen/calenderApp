@@ -9,7 +9,7 @@ module.exports = {
       full_name: { type: Sequelize.STRING(255), allowNull: false },
       email: { type: Sequelize.STRING(50), allowNull: false, unique: true },
       password: { type: Sequelize.STRING(255), allowNull: false },
-      mssv: { type: Sequelize.STRING(255), allowNull: true },
+      msnv: { type: Sequelize.STRING(255), allowNull: true },
       level: { type: Sequelize.STRING(255), allowNull: true },
       work_place: { type: Sequelize.STRING(255), allowNull: true },
       birth_day: { type: Sequelize.DATE, allowNull: true },

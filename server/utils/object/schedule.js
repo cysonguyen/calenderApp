@@ -20,8 +20,10 @@ async function validateAvailabilitySchedule(newSchedule, userId) {
   });
   const usersData = user.get({ plain: true });
   const schedules = usersData.Schedules;
+
+  const acceptedSchedules = schedules.filter((schedule) => JSON.parse(schedule.accepted_ids).some((id) => id == userId));
   const errors = [];
-  const conflict = findFirstConflict(newSchedule, schedules);
+  const conflict = findFirstConflict(newSchedule, acceptedSchedules);
   console.log(conflict);
   if (conflict) {
     errors.push({
@@ -53,16 +55,16 @@ function getMeetingCycles(
     interval,
     interval_count,
     is_repeat,
-    when_expires,
+    when_expired,
   } = schedule;
   const meetingCycles = [];
   const maxTimeQuery = end_time_query
     ? dayjs(end_time_query)
     : getMaxCycle(start_time, interval);
-  const maxTime = when_expires
-    ? dayjs(when_expires).isAfter(maxTimeQuery)
+  const maxTime = when_expired
+    ? dayjs(when_expired).isAfter(maxTimeQuery)
       ? maxTimeQuery
-      : when_expires
+      : when_expired
     : maxTimeQuery;
   let currentCycle = 1;
   let startTime = dayjs(start_time);
@@ -116,7 +118,7 @@ function findFirstConflict(scheduleNew, schedulesExisting, maxYears = 2) {
       scheduleNew.start_time,
       scheduleNew.interval,
       scheduleNew.interval_count,
-      scheduleNew.when_expires
+      scheduleNew.when_expired
     )
     : 1;
 
@@ -126,7 +128,7 @@ function findFirstConflict(scheduleNew, schedulesExisting, maxYears = 2) {
         existing.start_time,
         existing.interval,
         existing.interval_count,
-        existing.when_expires
+        existing.when_expired
       )
       : 1;
 

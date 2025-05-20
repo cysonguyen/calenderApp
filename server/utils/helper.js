@@ -16,9 +16,9 @@ function validatePassword(password) {
   return passwordRegex.test(password);
 }
 
-function validateMSSV(mssv) {
+function validateMSSV(msnv) {
   const mssvRegex = /^\d{8}$/;
-  return mssvRegex.test(mssv);
+  return mssvRegex.test(msnv);
 }
 
 function removeNullOrUndefined(obj) {

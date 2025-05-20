@@ -3,6 +3,7 @@ const { User } = require("../models");
 
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
+  const userId = req.headers["user-id"];
   const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
@@ -18,6 +19,11 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ errors: ["User not found"] });
     }
     req.user = user;
+
+    if (user.id != userId) {
+      return res.status(401).json({ errors: ["Unauthorized"] });
+    }
+
     next();
   } catch (err) {
     return res.status(400).json({ errors: ["Invalid token"] });
@@ -28,7 +34,7 @@ const authorizeValidUser = (requiredRole) => (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ errors: ["Unauthorized"] });
   }
-  if (req.user.role !== requiredRole) {
+  if (requiredRole && req.user.role !== requiredRole) {
     return res.status(403).json({ errors: ["Forbidden: Not enough permissions"] });
   }
   next();

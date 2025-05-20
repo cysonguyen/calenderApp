@@ -32,12 +32,12 @@ module.exports = {
 
   async getAccountInfoByQuery(req, res) {
     try {
-      const { id, full_name, mssv, email, username, role, page = 0, pageSize = PAGE_SIZE } = req.query;
-      const query = removeNullOrUndefined({ id, full_name, mssv, email, username, role });
+      const { id, full_name, msnv, email, username, role, page = 0, pageSize = PAGE_SIZE } = req.query;
+      const query = removeNullOrUndefined({ id, full_name, msnv, email, username, role });
       const whereClause = {};
       if (query.id) whereClause.id = query.id;
       if (query.full_name) whereClause.full_name = { [Op.like]: `%${query.full_name}%` };
-      if (query.mssv) whereClause.mssv = { [Op.like]: `%${query.mssv}%` };
+      if (query.msnv) whereClause.msnv = { [Op.like]: `%${query.msnv}%` };
       if (query.email) whereClause.email = { [Op.like]: `%${query.email}%` };
       if (query.username) whereClause.username = { [Op.like]: `%${query.username}%` };
       if (query.role) whereClause.role = query.role;
@@ -64,7 +64,7 @@ module.exports = {
   async updateAccountInfo(req, res) {
     try {
       const { id } = req.params;
-      const { full_name, username, email, mssv, level, work_place, birth_day } =
+      const { full_name, username, email, msnv, level, work_place, birth_day } =
         req.body;
       if (!id) {
         return res.status(400).json({ errors: ["Missing id"] });
@@ -76,7 +76,7 @@ module.exports = {
       const payload = removeNullOrUndefined({
         full_name,
         email,
-        mssv,
+        msnv,
         level,
         work_place,
         birth_day,
@@ -353,10 +353,10 @@ module.exports = {
     }
   },
 
-  async createStudentUser(req, res) {
+  async createStaffUser(req, res) {
     try {
-      const { full_name, username, email, mssv, birth_day, password } = req.body;
-      if (!full_name || !username || !email || !mssv || !password) {
+      const { full_name, username, email, msnv, birth_day, password, work_place, level } = req.body;
+      if (!full_name || !username || !email || !msnv || !password) {
         return res.status(400).json({ errors: ["Missing required fields"] });
       }
       const existingUser = await User.findOne({
@@ -368,7 +368,7 @@ module.exports = {
         return res.status(400).json({ errors: ["User already exists"] });
       }
       const hashedPassword = await bcrypt.hash(password, 10);
-      const data = removeNullOrUndefined({ full_name, username, email, mssv, birth_day, password: hashedPassword, role: ROLES.STUDENT });
+      const data = removeNullOrUndefined({ full_name, username, email, msnv, birth_day, password: hashedPassword, role: ROLES.STAFF, work_place, level });
       const user = await User.create(data);
       res.status(200).json(user);
     } catch (error) {
@@ -385,7 +385,7 @@ module.exports = {
       if (!Array.isArray(accounts) || accounts.length === 0) {
         return res.status(400).json({ errors: ["Accounts is invalid"] });
       }
-      const errors = validateImportAccounts(accounts, ROLES.STUDENT);
+      const errors = validateImportAccounts(accounts, ROLES.STAFF);
       if (errors.length > 0) {
         return res.status(400).json({ errors });
       }
@@ -419,10 +419,10 @@ module.exports = {
           full_name: account.full_name,
           username: account.username,
           email: account.email,
-          mssv: account.mssv,
+          msnv: account.msnv,
           birth_day: birthDay,
           password: hashedPassword,
-          role: ROLES.STUDENT,
+          role: ROLES.STAFF,
         }
         return removeNullOrUndefined(data);
       }));

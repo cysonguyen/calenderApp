@@ -6,6 +6,7 @@ const scheduleRoutes = require("./schedule");
 const meetingRoutes = require("./meeting");
 const notificationRoutes = require("./notification");
 const clientEventRoutes = require("./client-event");
+const reportRoutes = require("./report");
 const { authenticateToken } = require("../middleware/auth");
 
 router.use("/auth", authRoutes);
@@ -14,5 +15,6 @@ router.use("/schedule", authenticateToken, scheduleRoutes);
 router.use("/meeting", authenticateToken, meetingRoutes);
 router.use("/client-event", clientEventRoutes);
 router.use("/notification", authenticateToken, notificationRoutes);
+router.use("/report", authenticateToken, reportRoutes);
 
 module.exports = router;

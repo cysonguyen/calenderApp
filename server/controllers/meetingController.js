@@ -1,6 +1,7 @@
+const dayjs = require("dayjs");
 const sequelize = require("../config/sequelize");
 const SSEService = require("../lib/sseService");
-const { Meeting, MeetingCycle, Schedule, Notification } = require("../models");
+const { Meeting, MeetingCycle, Schedule, Notification, Report } = require("../models");
 const { removeNullOrUndefined, compareIdsArray } = require("../utils/helper");
 const { validateAvailabilityMeeting } = require("../utils/object/meeting");
 const { createMeetingCycle } = require("./meetingCycleController");
@@ -41,10 +42,12 @@ const createMeeting = async (req, res) => {
         await sequelize.transaction(async (transaction) => {
             let meetingCycle;
             if (!meeting_cycle_id) {
+                const startTime = dayjs(schedule.start_time).add((Number(cycle_index) - 1) * Number(schedule.interval_count), schedule.interval).toDate();
+                const endTime = dayjs(schedule.end_time).add((Number(cycle_index) - 1) * Number(schedule.interval_count), schedule.interval).toDate();
                 meetingCycle = await createMeetingCycle(
                     schedule_id,
-                    schedule.start_time,
-                    schedule.end_time,
+                    startTime,
+                    endTime,
                     cycle_index,
                     transaction
                 );
@@ -102,7 +105,7 @@ const createMeeting = async (req, res) => {
             }))
         );
         console.log("list_partner_ids", list_partner_ids);
-        
+
         SSEService.sendToUsers(list_partner_ids, {
             type: "MEETING_UPDATE",
         });
@@ -233,7 +236,15 @@ const getMeetingById = async (req, res) => {
         if (!meeting_id) {
             return res.status(400).json({ error: ["Meeting ID is required"] });
         }
-        const meeting = await Meeting.findByPk(meeting_id);
+        const meeting = await Meeting.findByPk(meeting_id, {
+            include: [
+                {
+                    model: Report,
+                    attributes: ["id", "content", "title", "createdAt"],
+                    order: [["createdAt", "DESC "]],
+                },
+            ],
+        });
         if (!meeting) {
             return res.status(400).json({ error: ["Meeting not found"] });
         }

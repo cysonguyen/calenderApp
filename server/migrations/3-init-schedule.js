@@ -18,6 +18,7 @@ module.exports = {
       interval_count: { type: Sequelize.INTEGER, allowNull: true },
       cycle_edited: { type: Sequelize.TEXT, allowNull: true },
       when_expired: { type: Sequelize.DATE, allowNull: true },
+      accepted_ids: { type: Sequelize.TEXT, allowNull: false, defaultValue: `[]` },
       createdAt: { type: Sequelize.DATE, allowNull: false },
       updatedAt: { type: Sequelize.DATE, allowNull: false },
     });

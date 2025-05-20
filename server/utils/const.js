@@ -1,7 +1,7 @@
 const ROLES = {
   ADMIN: "ADMIN",
-  TEACHER: "TEACHER",
-  STUDENT: "STUDENT",
+  LEADER: "LEADER",
+  STAFF: "STAFF",
 };
 
 const INTERVAL = {
