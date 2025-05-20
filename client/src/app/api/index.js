@@ -15,6 +15,11 @@ axiosInstance.interceptors.request.use((config) => {
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        const user = localStorage.getItem('user');
+        if (user) {
+            config.headers['user-id'] = JSON.parse(user).id;
+        }
     }
 
     return config;

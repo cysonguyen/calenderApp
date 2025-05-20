@@ -2,19 +2,19 @@
 
 import { DataGrid } from "@mui/x-data-grid";
 import { useQuery } from "@tanstack/react-query";
-import { getStudentsApi } from "@/app/api/client/account";
+import { getStaffsApi } from "@/app/api/client/account";
 import { useMemo, useState, useEffect, useCallback, memo } from "react";
 import dayjs from "dayjs";
 import { Box, MenuItem, Select, TextField } from "@mui/material";
 import { useDebounce } from "@/hooks/useDebounce";
 const pageSize = 20;
 
-const StudentTable = memo(function StudentTable({ isLoading, rows, initialColumns, selectedUsers, onSelect, allowAdd = true, isFetch = false, allowSelect = true }) {
+export function StaffTable({ isLoading, rows, initialColumns, selectedUsers, onSelect, allowAdd = true, isFetch = false, allowSelect = true }) {
     const [page, setPage] = useState(0);
     const [query, setQuery] = useState({ page, pageSize });
     const { data, isLoading: isLoadingUsers } = useQuery({
         queryKey: ['users', query],
-        queryFn: () => getStudentsApi(query),
+        queryFn: () => getStaffsApi(query),
         keepPreviousData: true,
         enabled: allowAdd || isFetch,
     });
@@ -41,12 +41,12 @@ const StudentTable = memo(function StudentTable({ isLoading, rows, initialColumn
     const { rowsData, totalRows } = useMemo(() => {
         if (rows) return {
             rowsData: rowTransform(rows),
-            totalRows: rows.length
+            totalRows: rows.length ?? 0
         };
         const users = data?.users;
         return {
             rowsData: rowTransform(users),
-            totalRows: data?.total
+            totalRows: data?.total ?? 0
         };
     }, [rows, data]);
 
@@ -58,6 +58,9 @@ const StudentTable = memo(function StudentTable({ isLoading, rows, initialColumn
             pageSize: newPage.pageSize
         }));
     }, []);
+
+    console.log('selectedUsers', selectedUsers);
+    
 
 
     return (
@@ -78,7 +81,7 @@ const StudentTable = memo(function StudentTable({ isLoading, rows, initialColumn
                 >
                     <MenuItem value="full_name">Full Name</MenuItem>
                     <MenuItem value="email">Email</MenuItem>
-                    <MenuItem value="mssv">MSSV</MenuItem>
+                    <MenuItem value="msnv">MSNV</MenuItem>
                 </Select>
             </Box>
             <DataGrid
@@ -100,10 +103,7 @@ const StudentTable = memo(function StudentTable({ isLoading, rows, initialColumn
             />
         </Box>
     )
-})
-
-export default StudentTable;
-
+}
 
 function rowTransform(rows) {
     if (!Array.isArray(rows)) return [];

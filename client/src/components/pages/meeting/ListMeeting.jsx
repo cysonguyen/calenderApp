@@ -29,7 +29,7 @@ export default function ListMeeting({ scheduleId }) {
         message: ''
     });
     const disabledEdit = useMemo(() => {
-        return user?.role !== ROLES.TEACHER;
+        return user?.role !== ROLES.LEADER;
     }, [user?.role]);
 
     const { data, isLoading } = useQuery({

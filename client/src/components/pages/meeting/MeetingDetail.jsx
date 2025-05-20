@@ -1,19 +1,22 @@
 'use client'
 
 import { createMeetingApi, getMeetingByIdApi, updateMeetingApi } from "@/app/api/client/meeting";
-import { Box, Paper, Typography, Button, TextField, Modal, Snackbar, Alert } from "@mui/material";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Box, Paper, Typography, Button, TextField, Modal, Snackbar, Alert, Card, CardContent } from "@mui/material";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ReportEditor from "./ReportEditor";
 import React, { useState, useCallback, useRef, useMemo } from "react";
-import StudentTable from "../groups/StudentTable";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import { useUser } from "@/hooks/useUser";
 import { getScheduleByIdApi } from "@/app/api/client/schedules";
 import { ROLES } from "@/utils/const";
+import { StaffTable } from "../groups/StaffsTable";
+import { createReportApi, deleteReportApi, updateReportApi } from "@/app/api/client/report";
+import { Delete, Edit } from "@mui/icons-material";
 export default function MeetingDetail({ id, scheduleId, indexCycle }) {
     const queryClient = useQueryClient();
     const [user, _update, isInitialized] = useUser();
+    const [isOpenReportModal, setIsOpenReportModal] = useState(false);
 
     const { data: schedule, isLoading: isLoadingSchedule } = useQuery({
         queryKey: ["schedule", scheduleId],
@@ -21,12 +24,12 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
         placeholderData: (placeholderData) => placeholderData,
         enabled: !!scheduleId && isInitialized && id === "add",
         onSuccess: (data) => {
-            setSelectedUsers(data?.Users?.map((user) => user.id) ?? []);
+            setSelectedUsers(data?.accepted_ids ? JSON.parse(data?.accepted_ids) : []);
         }
     });
 
     const disabledEdit = useMemo(() => {
-        return user?.role !== ROLES.TEACHER;
+        return user?.role !== ROLES.LEADER;
     }, [user?.role]);
 
     const { data, isLoading } = useQuery({
@@ -37,7 +40,6 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
         onSuccess: (data) => {
             setMeeting(data);
             setSelectedUsers(JSON.parse(data?.list_partner_ids ?? "[]"));
-            reportRef.current = data?.report ?? "";
         }
     });
     const router = useRouter();
@@ -47,22 +49,20 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
         type: "error",
         message: "",
     });
-    const reportRef = useRef(data?.report ?? "");
     const [selectedUsers, setSelectedUsers] = useState(JSON.parse(data?.list_partner_ids ?? "[]"));
     const [isOpenEditModal, setIsOpenEditModal] = useState(false);
-    const handleChangeReport = useCallback((newContent) => {
-        console.log('newContent', newContent);
-        setMeeting((prev) => ({ ...prev, report: newContent }));
-    }, []);
 
     const handleCloseNotification = () => {
         setOpenNotification(false);
     };
 
-
     const handleSave = useCallback(async () => {
+        const start_time = dayjs(schedule?.start_time).add((Number(indexCycle) - 1) * Number(schedule?.interval_count), schedule?.interval).toISOString();
+        const end_time = dayjs(schedule?.end_time).add((Number(indexCycle) - 1) * Number(schedule?.interval_count), schedule?.interval).toISOString();
         const payLoad = {
             ...meeting,
+            start_time: start_time,
+            end_time: end_time,
             list_partner_ids: selectedUsers,
             cycle_index: indexCycle,
             schedule_id: scheduleId,
@@ -125,16 +125,25 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
                                     justifyContent: "space-between",
                                 }}
                             >
-                                <Typography variant="h4">{id === "add" ? "New Meeting" : "Meeting Detail"}</Typography>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    size="small"
-                                    onClick={handleSave}
-                                >
-                                    Save
-                                </Button>
+                                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                                    <Typography variant="h4">{id === "add" ? "New Meeting" : "Meeting Detail"}</Typography>
+                                    <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
+                                        <Typography sx={{ fontWeight: "bold" }}>Time:</Typography>
+                                        <Typography>{dayjs(schedule?.start_time).format("HH:mm")} - {dayjs(schedule?.end_time).format("HH:mm")}</Typography>
+                                    </Box>
+                                </Box>
+                                <Box>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        size="small"
+                                        onClick={handleSave}
+                                    >
+                                        Save
+                                    </Button>
+                                </Box>
                             </Box>
+
                             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                                 <InputField
                                     sx={{ width: "50%" }}
@@ -149,30 +158,6 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
                                     value={meeting?.description ?? ""}
                                     onChange={(value) => handleChangeDetail("description", value)}
                                 />
-                                <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
-                                    <InputField
-                                        label="Start time"
-                                        value={
-                                            meeting?.start_time
-                                                ? dayjs(meeting.start_time).format("YYYY-MM-DDTHH:mm")
-                                                : ""
-                                        }
-                                        onChange={(value) => handleChangeDetail("start_time", value)}
-                                        type="datetime-local"
-                                        required
-                                    />
-                                    <InputField
-                                        label="End time"
-                                        value={
-                                            meeting?.end_time
-                                                ? dayjs(meeting.end_time).format("YYYY-MM-DDTHH:mm")
-                                                : ""
-                                        }
-                                        onChange={(value) => handleChangeDetail("end_time", value)}
-                                        type="datetime-local"
-                                        required
-                                    />
-                                </Box>
                             </Box>
                             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                                 <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -185,21 +170,21 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
                                     >
                                         <Typography sx={{ fontSize: "14px" }}>
                                             {id === "add"
-                                                ? "Select students"
-                                                : "Students in meeting"}
+                                                ? "Select staffs"
+                                                : "Staffs in meeting"}
                                         </Typography>
-                                        {id !== "add" && (
+                                        {/* {id !== "add" && (
                                             <Button
                                                 variant="text"
                                                 color="primary"
                                                 size="small"
                                                 onClick={() => setIsOpenEditModal(true)}
                                             >
-                                                Add Student
+                                                Add Staff
                                             </Button>
-                                        )}
+                                        )} */}
                                     </Box>
-                                    <StudentTable
+                                    <StaffTable
                                         rows={schedule?.Users}
                                         initialColumns={columns(router)}
                                         selectedUsers={selectedUsers}
@@ -209,10 +194,31 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
                                     />
                                 </Box>
                             </Box>
-                            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                                <Typography >Report:</Typography>
-                                <ReportEditor initialValue={reportRef.current} onChange={handleChangeReport} />
-                            </Box>
+                            {
+                                id !== "add" && (
+                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                                        <Box sx={{ display: "flex", flexDirection: "row", gap: 1, alignItems: "center", justifyContent: "space-between" }}>
+                                            <Typography sx={{ fontWeight: "bold" }}>Report:</Typography>
+                                            <Button variant="outlined" color="primary" size="small" onClick={() => setIsOpenReportModal(true)}>Add Report</Button>
+                                        </Box>
+                                        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                            {
+                                                isOpenReportModal ? (
+                                                    <ReportModalDialog open={isOpenReportModal} onClose={() => setIsOpenReportModal(false)} meetingId={id} />
+                                                ) : (
+                                                    meeting?.Reports?.length === 0 ? (
+                                                        <Typography sx={{ fontStyle: "italic", color: "text.secondary" }}>No report</Typography>
+                                                    ) : (
+                                                        meeting?.Reports?.map((report) => (
+                                                            <ReportInfo key={`report-${report.id}`} report={report} meetingId={id} />
+                                                        ))
+                                                    )
+                                                )
+                                            }
+                                        </Box>
+                                    </Box>
+                                )
+                            }
                             <Modal open={isOpenEditModal} onClose={() => setIsOpenEditModal(false)}>
                                 <Box
                                     sx={{
@@ -236,8 +242,8 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
                                             overflow: "auto",
                                         }}
                                     >
-                                        <Typography variant="h6">Change student in schedule</Typography>
-                                        <StudentTable
+                                        <Typography variant="h6">Change staff in schedule</Typography>
+                                        <StaffTable
                                             rows={schedule?.Users}
                                             initialColumns={columns(router)}
                                             selectedUsers={selectedUsers}
@@ -300,7 +306,7 @@ const InputField = React.memo(({ label, value, onChange, sx, ...props }) => {
 const columns = (router) => {
     return [
         { field: "full_name", headerName: "Full name", flex: 1, minWidth: 150 },
-        { field: "mssv", headerName: "MSSV", flex: 1, minWidth: 120 },
+        { field: "msnv", headerName: "MSNV", flex: 1, minWidth: 120 },
         { field: "email", headerName: "Email", flex: 1, minWidth: 200 },
         { field: "birth_day", headerName: "Birth Day", flex: 1, minWidth: 130 },
         {
@@ -316,7 +322,7 @@ const columns = (router) => {
                         variant="contained"
                         color="primary"
                         size="small"
-                        onClick={() => router?.push(`/students/${params.id}`)}
+                        onClick={() => router?.push(`/staffs/${params.id}`)}
                     >
                         View
                     </Button>
@@ -346,8 +352,120 @@ const MeetingInfo = ({ meeting }) => {
             </Box>
             <Box sx={{ display: "flex", flexDirection: "column" }}>
                 <Typography sx={{ fontWeight: "bold" }}>Report:</Typography>
-                <Box dangerouslySetInnerHTML={{ __html: meeting.report ?? "No report" }} />
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    {
+                        meeting?.Reports?.length === 0 ? (
+                            <Typography sx={{ fontStyle: "italic", color: "text.secondary" }}>No report</Typography>
+                        ) : (
+                            meeting?.Reports?.map((report) => (
+                                <ReportInfo key={`report-${report.id}`} report={report} meetingId={meeting.id} />
+                            ))
+                        )
+                    }
+                </Box>
             </Box>
         </Paper >
+    )
+}
+
+export function ReportInfo({ report, meetingId }) {
+    const queryClient = useQueryClient();
+    const [isOpenReportModal, setIsOpenReportModal] = useState(false);
+    const handleDeleteReport = useCallback(async () => {
+        const res = await deleteReportApi({ reportId: report.id });
+        if (!res?.errors) {
+            queryClient.invalidateQueries({ queryKey: ["meeting", meetingId] });
+        }
+    }, [report.id, meetingId]);
+    return (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Card>
+                {
+                    isOpenReportModal ? <CardContent>
+                        <ReportModalDialog open={isOpenReportModal} onClose={() => setIsOpenReportModal(false)} meetingId={meetingId} initialReport={report} />
+                    </CardContent> :
+                        <CardContent>
+                            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
+                                <Typography sx={{ fontWeight: "bold" }}>{report?.title ?? "No Title"}</Typography>
+                                <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
+                                    <Button variant="outlined" color="primary" size="small" onClick={() => setIsOpenReportModal(true)}><Edit fontSize="small" /></Button>
+                                    <Button variant="outlined" color="error" size="small" onClick={handleDeleteReport}><Delete fontSize="small" /></Button>
+                                </Box>
+                            </Box>
+                            <Box dangerouslySetInnerHTML={{ __html: report?.content ?? "No Content" }} />
+                        </CardContent>
+                }
+            </Card>
+        </Box>
+    )
+}
+
+export function ReportModalDialog({ open, onClose, initialReport, meetingId }) {
+    const queryClient = useQueryClient();
+    const [openNotification, setOpenNotification] = useState(false);
+    const [message, setMessage] = useState({
+        type: "error",
+        message: "",
+    });
+
+    const handleSave = useCallback(async (value) => {
+        const payLoad = {
+            meeting_id: meetingId,
+            ...value,
+        }
+        console.log('payLoad', payLoad);
+        try {
+            let res = null;
+            if (initialReport) {
+                console.log('updateReportApi', initialReport.id);
+                res = await updateReportApi({ reportId: initialReport.id, report: payLoad });
+            } else {
+                res = await createReportApi({ report: payLoad });
+            }
+            if (!res?.errors) {
+                setOpenNotification(true);
+                setMessage({
+                    type: "success",
+                    message: "Report saved successfully",
+                });
+                queryClient.invalidateQueries({ queryKey: ["meeting", meetingId] });
+                onClose?.(value);
+            } else {
+                setOpenNotification(true);
+                setMessage({
+                    type: "error",
+                    message: "Report saved failed",
+                });
+            }
+        } catch (error) {
+            setOpenNotification(true);
+            setMessage({
+                type: "error",
+                message: "Report saved failed",
+            });
+        }
+    }, [onClose, meetingId]);
+    const handleCloseNotification = () => {
+        setOpenNotification(false);
+    };
+    if (!open) return null;
+    return (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {
+                initialReport && (
+                    <Typography variant="h6">{initialReport.title}</Typography>
+                )
+            }
+            <ReportEditor initialContent={initialReport?.content} initialTitle={initialReport?.title} onSubmit={(value) => handleSave(value)} onClose={onClose} />
+            <Snackbar
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                open={openNotification}
+                autoHideDuration={3000}
+                onClose={handleCloseNotification}
+            >
+                <Alert severity={message.type}>{message.message}</Alert>
+            </Snackbar>
+        </Box>
+
     )
 }

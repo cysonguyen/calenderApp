@@ -70,39 +70,32 @@ export default function EditInfoModal({ open, onClose, onSave, user }) {
                         value={info?.email ?? ''}
                         onChange={(e) => handleChange('email', e.target.value)}
                     />
-                    {
-                        info?.role === ROLES.TEACHER && (
-                            <Box sx={{
-                                display: 'flex',
-                                gap: 2,
-                            }}>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    label="Work place"
-                                    value={info?.work_place ?? ''}
-                                    onChange={(e) => handleChange('work_place', e.target.value)}
-                                />
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    label="Level"
-                                    value={info?.level ?? ''}
-                                    onChange={(e) => handleChange('level', e.target.value)}
-                                />
-                            </Box>
-                        )
-                    }
-                    {
-                        info?.role === ROLES.STUDENT && (
-                            <TextField
-                                fullWidth
-                                size="small"
-                                label="MSSV"
-                                value={info?.mssv ?? ''}
-                            />
-                        )
-                    }
+
+                    <Box sx={{
+                        display: 'flex',
+                        gap: 2,
+                    }}>
+                        <TextField
+                            fullWidth
+                            size="small"
+                            label="Work place"
+                            value={info?.work_place ?? ''}
+                            onChange={(e) => handleChange('work_place', e.target.value)}
+                        />
+                        <TextField
+                            fullWidth
+                            size="small"
+                            label="Level"
+                            value={info?.level ?? ''}
+                            onChange={(e) => handleChange('level', e.target.value)}
+                        />
+                    </Box>
+                    <TextField
+                        fullWidth
+                        size="small"
+                        label="MSNV"
+                        value={info?.msnv ?? ''}
+                    />
                 </Box>
                 <Box sx={{
                     display: 'flex',

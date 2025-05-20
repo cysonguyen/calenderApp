@@ -28,3 +28,7 @@ export async function updateScheduleApi({ userId, scheduleId, schedule }) {
 export async function deleteScheduleApi(scheduleId) {
     return await axios.delete(`${BASE_URL}/schedule/${scheduleId}`);
 }
+
+export async function acceptScheduleApi(scheduleId, userId) {
+    return await axios.put(`${BASE_URL}/schedule/accept/${scheduleId}`, { userId });
+}

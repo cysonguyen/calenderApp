@@ -1,18 +1,18 @@
 import { Alert, Box, Button, Modal, Paper, Snackbar, TextField, Typography } from "@mui/material";
 import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createStudentApi } from "@/app/api/client/account";
+import { createStaffApi } from "@/app/api/client/account";
 
-export default function StudentAddModal({ open, onClose }) {
+export default function StaffAddModal({ open, onClose }) {
     const queryClient = useQueryClient();
-    const { mutate: createStudent, isLoading } = useMutation({
-        mutationFn: async (student) => {
-            const res = await createStudentApi(student);
+    const { mutate: createStaff, isLoading } = useMutation({
+        mutationFn: async (staff) => {
+            const res = await createStaffApi(staff);
             if (!res.errors) {
-                queryClient.invalidateQueries({ queryKey: ['students'], exact: false });
+                queryClient.invalidateQueries({ queryKey: ['staffs'], exact: false });
                 handleClose({
                     status: 'success',
-                    message: 'Updated success',
+                    message: 'Added success',
                 });
             } else {
                 onClose?.({
@@ -28,7 +28,7 @@ export default function StudentAddModal({ open, onClose }) {
         full_name: '',
         birth_day: '',
         email: '',
-        mssv: '',
+        msnv: '',
         username: '',
         password: '',
     });
@@ -38,8 +38,8 @@ export default function StudentAddModal({ open, onClose }) {
     }, []);
 
     const handleSave = useCallback(() => {
-        createStudent(info);
-    }, [info, createStudent]);
+        createStaff(info);
+    }, [info, createStaff]);
 
     const handleClose = useCallback((data) => {
         onClose?.(data);
@@ -47,7 +47,7 @@ export default function StudentAddModal({ open, onClose }) {
             full_name: '',
             birth_day: '',
             email: '',
-            mssv: '',
+            msnv: '',
             username: '',
             password: '',
         });
@@ -73,7 +73,7 @@ export default function StudentAddModal({ open, onClose }) {
                     <Typography variant="h5" sx={{
                         fontWeight: 'bold',
                         mb: 2,
-                    }}>Student Information</Typography>
+                    }}>Staff Information</Typography>
                     <TextField
                         fullWidth
                         size="small"
@@ -127,9 +127,28 @@ export default function StudentAddModal({ open, onClose }) {
                         <TextField
                             fullWidth
                             size="small"
-                            label="MSSV"
-                            value={info?.mssv ?? ''}
-                            onChange={(e) => handleChange('mssv', e.target.value)}
+                            label="MSNV"
+                            value={info?.msnv ?? ''}
+                            onChange={(e) => handleChange('msnv', e.target.value)}
+                        />
+                    </Box>
+                    <Box sx={{
+                        display: 'flex',
+                        gap: 2,
+                    }}>
+                        <TextField
+                            fullWidth
+                            size="small"
+                            label="Level"
+                            value={info?.level ?? ''}
+                            onChange={(e) => handleChange('level', e.target.value)}
+                        />
+                        <TextField
+                            fullWidth
+                            size="small"
+                            label="Work Place"
+                            value={info?.work_place ?? ''}
+                            onChange={(e) => handleChange('work_place', e.target.value)}
                         />
                     </Box>
                 </Box>

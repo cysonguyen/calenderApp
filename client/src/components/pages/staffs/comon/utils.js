@@ -23,7 +23,7 @@ export const validateJsonData = (jsonData) => {
         };
     }
 
-    const requiredFields = ['username', 'password', 'full_name', 'email', 'mssv'];
+    const requiredFields = ['username', 'password', 'full_name', 'email', 'msnv'];
     const errors = []
     jsonData.forEach((item, index) => {
         const missingFields = requiredFields.filter(field => !item[field]);

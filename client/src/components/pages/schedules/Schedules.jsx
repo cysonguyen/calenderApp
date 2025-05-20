@@ -1,6 +1,6 @@
 'use client';
 
-import { deleteScheduleApi, getSchedulesApi } from "@/app/api/client/schedules";
+import { acceptScheduleApi, deleteScheduleApi, getSchedulesApi } from "@/app/api/client/schedules";
 import { useUser } from "@/hooks/useUser";
 import { Box, Paper, Typography, Button, TextField, Snackbar, Alert } from "@mui/material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -71,6 +71,25 @@ export default function Schedules() {
         }
     })
 
+    const { mutate: acceptSchedule, isLoading: isAccepting } = useMutation({
+        mutationFn: ({ scheduleId, userId }) => acceptScheduleApi(scheduleId, userId),
+        onSuccess: (res) => {
+            if (res?.scheduleId) {
+                queryClient.invalidateQueries({ queryKey: ['schedules'] });
+                setMessage({
+                    type: 'success',
+                    message: 'Schedule accepted successfully'
+                });
+                setOpenNotification(true);
+            } else {
+                setMessage({
+                    type: 'error',
+                    message: res?.errors || 'Something went wrong'
+                });
+                setOpenNotification(true);
+            }
+        }
+    })
     const [totalRows, setTotalRows] = useState(data?.length || 0);
     const [schedules, setSchedules] = useState(data || []);
 
@@ -90,6 +109,10 @@ export default function Schedules() {
         deleteSchedule(scheduleId);
     }, [deleteSchedule]);
 
+    const handleAcceptSchedule = useCallback((scheduleId) => {
+        acceptSchedule({ scheduleId, userId: user?.id });
+    }, [acceptSchedule, user?.id]);
+
     const rows = useMemo(() => {
         return schedules.map((schedule) => ({
             ...schedule,
@@ -101,24 +124,33 @@ export default function Schedules() {
 
     const initialColumns = [
         {
-            field: 'id', headerName: 'ID', flex: 1, headerClassName: 'bold-header',
-            cellClassName: 'bold-cell'
+            field: 'id', headerName: 'ID', headerClassName: 'bold-header',
+            cellClassName: 'bold-cell',
+            width: 100
         },
         { field: 'title', headerName: 'Title', flex: 1 },
         { field: 'description', headerName: 'Description', flex: 1 },
-        { field: 'start_time', headerName: 'Start Time', flex: 1 },
-        { field: 'end_time', headerName: 'End Time', flex: 1 },
+        { field: 'start_time', headerName: 'Start Time', width: 150 },
+        { field: 'end_time', headerName: 'End Time', width: 150 },
         {
             field: 'actions', headerName: 'Actions', flex: 1, align: 'right', headerAlign: 'right',
             sortable: false,
             renderCell: (params) => {
                 return (
                     <ButtonGroup>
-                        <Button variant="contained" color="primary" onClick={() => router.push(`/schedules/${params.row.id}`)}>
-                            View
-                        </Button>
                         {
-                            user?.role === ROLES.TEACHER && (
+                            params.row.status === 'unaccepted' ? (
+                                <Button variant="contained" color="success" onClick={() => handleAcceptSchedule(params.row.id)}>
+                                    Accept
+                                </Button>
+                            ) : (
+                                <Button variant="contained" color="primary" onClick={() => router.push(`/schedules/${params.row.id}`)}>
+                                    View
+                                </Button>
+                            )
+                        }
+                        {
+                            user?.role === ROLES.LEADER && (
                                 <Button variant="contained" color="error" onClick={() => handleDeleteSchedule(params.row.id)}>
                                     Delete
                                 </Button>
@@ -137,7 +169,8 @@ export default function Schedules() {
         if (!Array.isArray(schedules) || schedules.length === 0) {
             return cycles;
         }
-        schedules.forEach((schedule) => {
+        const acceptedSchedules = schedules.filter((schedule) => schedule.status === 'accepted');
+        acceptedSchedules.forEach((schedule) => {
             schedule.meetingCycles?.forEach((cycle) => {
                 cycles.push({
                     ...cycle,
@@ -180,7 +213,7 @@ export default function Schedules() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h4">Schedules</Typography>
                     {
-                        user?.role === ROLES.TEACHER && (
+                        user?.role === ROLES.LEADER && (
                             <Button variant="contained" color="primary" onClick={() => router.push('/schedules/add')}>Create</Button>
                         )
                     }

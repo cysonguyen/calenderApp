@@ -1,15 +1,15 @@
 'use client';
 
 import { Alert, Box, Button, Paper, Snackbar, Typography } from "@mui/material";
-import StudentTable from "../groups/StudentTable";
+import { StaffTable } from "../groups/StaffsTable";
 import { useRouter } from "next/navigation";
-import StudentAddModal from "./StudentAddModal";
 import { useState, useCallback } from "react";
-import StudentImportModal from "./StudentImportModal";
+import StaffAddModal from "./StaffAddModal";
+import StaffImportModal from "./StaffImportModal";
 const columns = (router) => {
     return [
         { field: 'full_name', headerName: 'Full name', flex: 1, minWidth: 150 },
-        { field: 'mssv', headerName: 'MSSV', flex: 1, minWidth: 120 },
+        { field: 'msnv', headerName: 'MSNV', flex: 1, minWidth: 120 },
         { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
         { field: 'birth_day', headerName: 'Birth Day', flex: 1, minWidth: 130 },
         {
@@ -21,7 +21,7 @@ const columns = (router) => {
             headerAlign: 'right',
             renderCell: (params) => {
                 return (
-                    <Button variant="contained" color="primary" size="small" onClick={() => router?.push(`/students/${params.id}`)}>
+                    <Button variant="contained" color="primary" size="small" onClick={() => router?.push(`/staffs/${params.id}`)}>
                         View
                     </Button>
                 )
@@ -31,7 +31,7 @@ const columns = (router) => {
 }
 
 
-export default function Students() {
+export default function Staffs() {
     const router = useRouter();
     const [openAddStudentModal, setOpenAddStudentModal] = useState(false);
     const [openImportStudentModal, setOpenImportStudentModal] = useState(false);
@@ -69,13 +69,13 @@ export default function Students() {
             <Paper sx={{ p: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="h4">Students</Typography>
+                        <Typography variant="h4">Staffs</Typography>
                         <Box sx={{ display: 'flex', gap: 2 }}>
                             <Button variant="contained" color="primary" onClick={() => setOpenImportStudentModal(true)}>Import</Button>
                             <Button variant="contained" color="primary" onClick={() => setOpenAddStudentModal(true)}>Add</Button>
                         </Box>
                     </Box>
-                    <StudentTable
+                    <StaffTable
                         rows={null}
                         initialColumns={columns(router)}
                         allowSelect={false}
@@ -83,11 +83,11 @@ export default function Students() {
                     />
                 </Box>
             </Paper>
-            <StudentAddModal
+            <StaffAddModal
                 open={openAddStudentModal}
                 onClose={handleCloseAddModal}
             />
-            <StudentImportModal
+            <StaffImportModal
                 open={openImportStudentModal}
                 onClose={handleCloseImportModal}
             />

@@ -135,6 +135,21 @@ export default function RegisterPage() {
                             error={!!errors.email}
                             helperText={errors.email}
                         />
+                        <TextField
+                            margin="normal"
+                            required
+                            fullWidth
+                            id="msnv"
+                            label="MSNV"
+                            name="msnv"
+                            autoComplete="msnv"
+                            autoFocus
+                            value={formData.msnv ?? ''}
+                            size='small'
+                            onChange={handleChange}
+                            error={!!errors.msnv}
+                            helperText={errors.msnv}
+                        />
                         <Box sx={{ display: 'flex', gap: 2 }}>
                             <TextField
                                 margin="normal"

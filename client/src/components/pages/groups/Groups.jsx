@@ -46,7 +46,7 @@ export default function Groups() {
     });
 
     const disabledEdit = useMemo(() => {
-        return user?.role !== ROLES.TEACHER;
+        return user?.role !== ROLES.LEADER;
     }, [user?.role]);
 
     useEffect(() => {

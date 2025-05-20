@@ -105,21 +105,10 @@ export default function AccountInfo() {
                         <Typography variant="body2">Full name: {user?.full_name ?? 'N/A'}</Typography>
                         <Typography variant="body2">Email: {user?.email ?? 'N/A'}</Typography>
                         <Typography variant="body2">Date of birth: {user?.birth_day ? dayjs(user?.birth_day).format('DD/MM/YYYY') : 'N/A'}</Typography>
-                        {
-                            user?.role === ROLES.TEACHER && (
-                                <>
-                                    <Typography variant="body2">Level: {user?.level ?? 'N/A'}</Typography>
-                                    <Typography variant="body2">Work place: {user?.work_place ?? 'N/A'}</Typography>
-                                </>
-                            )
-                        }
-                        {
-                            user?.role === ROLES.STUDENT && (
-                                <>
-                                    <Typography variant="body2">MSSV: {user?.mssv ?? 'N/A'}</Typography>
-                                </>
-                            )
-                        }
+                        <Typography variant="body2">Level: {user?.level ?? 'N/A'}</Typography>
+                        <Typography variant="body2">Work place: {user?.work_place ?? 'N/A'}</Typography>
+                        <Typography variant="body2">MSNV: {user?.msnv ?? 'N/A'}</Typography>
+
                     </Box>
                 </Box>
             </Paper>

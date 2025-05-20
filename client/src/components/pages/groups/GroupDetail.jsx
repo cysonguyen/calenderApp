@@ -6,15 +6,15 @@ import { getGroupByIdApi } from "@/app/api/client/account";
 import { useState, useMemo, useCallback, startTransition } from "react";;
 import { useRouter } from "next/navigation";
 import Loading from "@/components/common/loading";
-import StudentTable from "./StudentTable";
 import { useGroupController } from "./comon/group.controller";
 import { useUser } from "@/hooks/useUser";
 import { ROLES } from "@/utils/const";
+import { StaffTable } from "./StaffsTable";
 
 const columns = (router) => {
     return [
         { field: 'full_name', headerName: 'Full name', flex: 1, minWidth: 150 },
-        { field: 'mssv', headerName: 'MSSV', flex: 1, minWidth: 120 },
+        { field: 'msnv', headerName: 'MSNV', flex: 1, minWidth: 120 },
         { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
         { field: 'birth_day', headerName: 'Birth Day', flex: 1, minWidth: 130 },
         {
@@ -26,7 +26,7 @@ const columns = (router) => {
             headerAlign: 'right',
             renderCell: (params) => {
                 return (
-                    <Button variant="contained" color="primary" size="small" onClick={() => router?.push(`/students/${params.id}`)}>
+                    <Button variant="contained" color="primary" size="small" onClick={() => router?.push(`/staffs/${params.id}`)}>
                         View
                     </Button>
                 )
@@ -65,7 +65,7 @@ export default function GroupDetail({ groupId }) {
     }, [groupId, data]);
 
     const disabledEdit = useMemo(() => {
-        return user?.role !== ROLES.TEACHER;
+        return user?.role !== ROLES.LEADER;
     }, [user?.role]);
 
     const [group, setGroup] = useState(initGroup);
@@ -170,16 +170,16 @@ export default function GroupDetail({ groupId }) {
                     }
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                            <Typography sx={{ fontSize: '14px' }}>{groupId === 'add' ? 'Select students' : 'Students in group'}</Typography>
+                            <Typography sx={{ fontSize: '14px' }}>{groupId === 'add' ? 'Select staffs' : 'Staffs in group'}</Typography>
                             {
                                 groupId !== 'add' && !disabledEdit && (
                                     <Button variant="text" color="primary" size="small" onClick={() => setIsOpenEditModal(true)}>
-                                        Add Student
+                                        Add Staff
                                     </Button>
                                 )
                             }
                         </Box>
-                        <StudentTable
+                        <StaffTable 
                             rows={groupId === 'add' ? null : group?.Users}
                             initialColumns={columns(router)}
                             selectedUsers={selectedUsers}
@@ -197,8 +197,8 @@ export default function GroupDetail({ groupId }) {
 
                 <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', maxWidth: '900px', width: '100%', bgcolor: 'background.paper', boxShadow: 24, p: 4 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: '80vh', overflow: 'auto' }}>
-                        <Typography variant="h6">Change student in group</Typography>
-                        <StudentTable
+                        <Typography variant="h6">Change staff in group</Typography>
+                        <StaffTable
                             rows={null}
                             initialColumns={columns(router)}
                             selectedUsers={selectedUsers}

@@ -30,7 +30,7 @@ const drawerWidth = 240;
 const menuItems = [
   { text: 'Schedules', icon: <CalendarToday />, path: '/schedules' },
   { text: 'Groups', icon: <Class />, path: '/groups' },
-  { text: 'Students', icon: <People />, path: '/students' },
+  { text: 'Staffs', icon: <People />, path: '/staffs' },
 ];
 
 export default function Drawer({ mobileOpen, onDrawerToggle }) {
@@ -39,9 +39,9 @@ export default function Drawer({ mobileOpen, onDrawerToggle }) {
   const [user] = useUser();
 
   const menuItemsFiltered = useMemo(() => {
-    if (user?.role !== ROLES.TEACHER) {
+    if (user?.role !== ROLES.LEADER) {
       return menuItems.filter((item) => {
-        return item.path !== '/students';
+        return item.path !== '/staffs';
       });
     }
     return menuItems;

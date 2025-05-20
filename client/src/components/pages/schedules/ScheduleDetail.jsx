@@ -6,8 +6,11 @@ import {
     Button,
     Checkbox,
     Divider,
+    InputLabel,
+    ListItemText,
     MenuItem,
     Modal,
+    OutlinedInput,
     Paper,
     Select,
     Snackbar,
@@ -16,8 +19,8 @@ import {
     Typography,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-import React, { useCallback, useMemo, useState } from "react";
-import StudentTable from "../groups/StudentTable";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { StaffTable } from "../groups/StaffsTable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     createScheduleApi,
@@ -29,6 +32,8 @@ import dayjs from "dayjs";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import ListMeeting from "../meeting/ListMeeting";
 import { ROLES } from "@/utils/const";
+import { useDebounce } from "@/hooks/useDebounce";
+import { getGroupByQueryApi } from "@/app/api/client/account";
 const defaultSchedule = {
     title: "",
     description: "",
@@ -44,6 +49,18 @@ const INTERVAL_OPTIONS = [
     { value: "YEAR", label: "Year" },
 ];
 
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+    PaperProps: {
+        style: {
+            maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+            width: 250,
+        },
+    },
+};
+
+const PAGE_SIZE = 10;
 export default function ScheduleDetail({ scheduleId }) {
     const queryClient = useQueryClient();
     const router = useRouter();
@@ -51,14 +68,28 @@ export default function ScheduleDetail({ scheduleId }) {
     const [user, _update, isInitialized] = useUser();
     const [openNotification, setOpenNotification] = useState(false);
     const [tab, setTab] = useState("detail");
+    const [searchGroup, setSearchGroup] = useState(undefined);
+    const debouncedSearch = useDebounce(searchGroup, 500);
+
     const [message, setMessage] = useState({
         type: "error",
         message: "",
     });
 
     const disabledEdit = useMemo(() => {
-        return user?.role !== ROLES.TEACHER;
+        return user?.role !== ROLES.LEADER;
     }, [user?.role]);
+
+    const { data: groupsData, isLoading: isLoadingGroups } = useQuery({
+        queryKey: ['groups', { name: debouncedSearch }],
+        queryFn: () => getGroupByQueryApi({ name: debouncedSearch }),
+        enabled: isInitialized,
+    });
+
+    const groups = useMemo(() => {
+        if (!groupsData) return [];
+        return groupsData?.groups ?? [];
+    }, [groupsData]);
 
     const { data, isLoading } = useQuery({
         queryKey: ["schedule", scheduleId],
@@ -66,7 +97,7 @@ export default function ScheduleDetail({ scheduleId }) {
         enabled: !!scheduleId && scheduleId !== "add" && isInitialized,
         onSuccess: (data) => {
             setSchedule(data);
-
+            setSelectedGroups(data?.Groups?.map((g) => g.id) ?? []);
             setSelectedUsers(data?.Users?.map((user) => user.id)?.filter((id) => id !== null) ?? []);
         },
     });
@@ -119,6 +150,7 @@ export default function ScheduleDetail({ scheduleId }) {
         return data;
     }, [data, isLoading, scheduleId]);
 
+    const [selectedGroups, setSelectedGroups] = useState(initialSchedule?.Groups?.map((g) => g.id) ?? []);
     const [schedule, setSchedule] = useState(initialSchedule);
     const [selectedUsers, setSelectedUsers] = useState([
         initialSchedule?.Users ?? [],
@@ -134,14 +166,13 @@ export default function ScheduleDetail({ scheduleId }) {
     }, []);
 
     const handleSave = useCallback(() => {
-
-        const payload = { ...schedule, userIds: structuredClone(selectedUsers) };
+        const payload = { ...schedule, userIds: structuredClone(selectedUsers), group_ids: structuredClone(selectedGroups) };
         if (scheduleId === "add") {
             createSchedule(payload);
         } else {
             updateSchedule({ ...payload, scheduleId });
         }
-    }, [schedule, selectedUsers]);
+    }, [schedule, selectedUsers, selectedGroups]);
 
     const handleCloseNotification = () => {
         setOpenNotification(false);
@@ -296,6 +327,45 @@ export default function ScheduleDetail({ scheduleId }) {
                                             </Box>
                                         )}
                                     </Box>
+
+
+                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                                        <Typography>Select by Group</Typography>
+                                        <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
+                                            <TextField
+                                                size="small"
+                                                label="Search"
+                                                fullWidth
+                                                value={searchGroup}
+                                                onChange={(e) => setSearchGroup(e.target.value)}
+                                            />
+                                            <Select
+                                                fullWidth
+                                                multiple
+                                                size="small"
+                                                value={selectedGroups}
+                                                onChange={(value) => {
+                                                    console.log(value.target.value);
+                                                    setSelectedGroups(value.target.value);
+                                                }}
+                                                renderValue={(values) => {
+                                                    if (!values || values.length === 0) return "Choose group";
+                                                    const groupsData = groups?.filter((g) => values.some((v) => v == g.id));
+                                                    return groupsData.map((g) => g.name).join(", ");
+                                                }}
+                                                MenuProps={MenuProps}
+                                            >
+                                                {groups?.map((group) => (
+                                                    <MenuItem key={group.id} value={group.id}>
+                                                        <Checkbox checked={selectedGroups.some((v) => v == group.id)} />
+                                                        <ListItemText primary={group.name} />
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </Box>
+
+                                    </Box>
+
                                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                                         <Box sx={{ display: "flex", flexDirection: "column" }}>
                                             <Box
@@ -307,8 +377,8 @@ export default function ScheduleDetail({ scheduleId }) {
                                             >
                                                 <Typography sx={{ fontSize: "14px" }}>
                                                     {scheduleId === "add"
-                                                        ? "Select students"
-                                                        : "Students in schedule"}
+                                                        ? "Select staffs"
+                                                        : "Staffs in schedule"}
                                                 </Typography>
                                                 {scheduleId !== "add" && (
                                                     <Button
@@ -317,11 +387,11 @@ export default function ScheduleDetail({ scheduleId }) {
                                                         size="small"
                                                         onClick={() => setIsOpenEditModal(true)}
                                                     >
-                                                        Add Student
+                                                        Add Staff
                                                     </Button>
                                                 )}
                                             </Box>
-                                            <StudentTable
+                                            <StaffTable
                                                 rows={scheduleId === "add" ? null : schedule?.Users}
                                                 initialColumns={columns(router)}
                                                 selectedUsers={selectedUsers}
@@ -370,8 +440,8 @@ export default function ScheduleDetail({ scheduleId }) {
                                         overflow: "auto",
                                     }}
                                 >
-                                    <Typography variant="h6">Change student in schedule</Typography>
-                                    <StudentTable
+                                    <Typography variant="h6">Change staff in schedule</Typography>
+                                    <StaffTable
                                         rows={null}
                                         initialColumns={columns(router)}
                                         selectedUsers={selectedUsers}
@@ -447,7 +517,7 @@ const SelectField = React.memo(
 const columns = (router) => {
     return [
         { field: "full_name", headerName: "Full name", flex: 1, minWidth: 150 },
-        { field: "mssv", headerName: "MSSV", flex: 1, minWidth: 120 },
+        { field: "msnv", headerName: "MSNV", flex: 1, minWidth: 120 },
         { field: "email", headerName: "Email", flex: 1, minWidth: 200 },
         { field: "birth_day", headerName: "Birth Day", flex: 1, minWidth: 130 },
         {
@@ -463,7 +533,7 @@ const columns = (router) => {
                         variant="contained"
                         color="primary"
                         size="small"
-                        onClick={() => router?.push(`/students/${params.id}`)}
+                        onClick={() => router?.push(`/staffs/${params.id}`)}
                     >
                         View
                     </Button>

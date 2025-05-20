@@ -3,9 +3,9 @@ import { UploadFile } from "@mui/icons-material";
 import { Alert, Box, Button, Input, Modal, Paper, Snackbar, Typography } from "@mui/material";
 import { readExcelFile, validateJsonData } from "./comon/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { importStudentsApi } from "@/app/api/client/account";
+import { importStaffsApi } from "@/app/api/client/account";
 
-export default function StudentImportModal({ open, onClose, isLoading }) {
+export default function StaffImportModal({ open, onClose, isLoading }) {
     const queryClient = useQueryClient();
     const inputRef = useRef(null);
     const [data, setData] = useState([]);
@@ -17,9 +17,9 @@ export default function StudentImportModal({ open, onClose, isLoading }) {
         message: ''
     });
 
-    const { mutate: importStudents, isLoading: isImporting } = useMutation({
+    const { mutate: importStaffs, isLoading: isImporting } = useMutation({
         mutationFn: (data) => {
-            return importStudentsApi({ accounts: data });
+            return importStaffsApi({ accounts: data });
         },
         onSettled: (res) => {
             if (res.errors) {
@@ -31,10 +31,10 @@ export default function StudentImportModal({ open, onClose, isLoading }) {
                 setOpenNotification(true);
             } else {
                 handleClose();
-                queryClient.invalidateQueries({ queryKey: ['students'] });
+                queryClient.invalidateQueries({ queryKey: ['staffs'] });
                 setMessage({
                     status: 'success',
-                    message: 'Import students successfully'
+                    message: 'Import staffs successfully'
                 });
                 setOpenNotification(true);
             }
@@ -65,7 +65,7 @@ export default function StudentImportModal({ open, onClose, isLoading }) {
     }, []);
 
     const handleImport = () => {
-        importStudents(data);
+        importStaffs(data);
     }
 
     const handleClose = () => {
@@ -92,7 +92,7 @@ export default function StudentImportModal({ open, onClose, isLoading }) {
                         gap: 2
                     }}>
                         <Box>
-                            <Typography variant="h5">Import students</Typography>
+                            <Typography variant="h5">Import staffs</Typography>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                             <Typography variant="body1">Choose  a CSV file:</Typography>
@@ -122,7 +122,7 @@ export default function StudentImportModal({ open, onClose, isLoading }) {
                                     {
                                         !errors?.length > 0 && (
                                             <Typography variant="body1">
-                                                <span style={{ fontWeight: 'bold' }}>{data.length}</span> students will be added.
+                                                <span style={{ fontWeight: 'bold' }}>{data.length}</span> staffs will be added.
                                             </Typography>
                                         )
                                     }

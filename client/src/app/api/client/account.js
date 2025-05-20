@@ -45,17 +45,16 @@ export async function createGroupApi(group) {
 };
 
 export async function deleteGroupApi(groupId) {
-    return await axios.delete(`${BASE_URL}/account/group/${groupId}` );
+    return await axios.delete(`${BASE_URL}/account/group/${groupId}`);
 };
 
-export async function getStudentsApi({ id, full_name, email, mssv, username, role = ROLES.STUDENT, page, pageSize }) {
+export async function getStaffsApi({ id, full_name, email, msnv, username, page, pageSize }) {
     return await axios.get(`${BASE_URL}/account/info`, {
         params: {
-            role,
             id,
             full_name,
             email,
-            mssv,
+            msnv,
             username,
             page,
             pageSize
@@ -63,11 +62,11 @@ export async function getStudentsApi({ id, full_name, email, mssv, username, rol
     });
 };
 
-export async function createStudentApi(student) {
-    return await axios.post(`${BASE_URL}/account/student`, student);
+export async function createStaffApi(staff) {
+    return await axios.post(`${BASE_URL}/account/staff`, staff);
 };
 
-export async function importStudentsApi(data) {
+export async function importStaffsApi(data) {
     return await axios.post(`${BASE_URL}/account/import`, data);
 };
 
