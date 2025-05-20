@@ -358,7 +358,7 @@ const MeetingInfo = ({ meeting }) => {
                             <Typography sx={{ fontStyle: "italic", color: "text.secondary" }}>No report</Typography>
                         ) : (
                             meeting?.Reports?.map((report) => (
-                                <ReportInfo key={`report-${report.id}`} report={report} meetingId={meeting.id} />
+                                <ReportInfo key={`report-${report.id}`} report={report} meetingId={meeting.id} disabledEdit={true} />
                             ))
                         )
                     }
@@ -368,7 +368,7 @@ const MeetingInfo = ({ meeting }) => {
     )
 }
 
-export function ReportInfo({ report, meetingId }) {
+export function ReportInfo({ report, meetingId, disabledEdit }) {
     const queryClient = useQueryClient();
     const [isOpenReportModal, setIsOpenReportModal] = useState(false);
     const handleDeleteReport = useCallback(async () => {
@@ -387,10 +387,13 @@ export function ReportInfo({ report, meetingId }) {
                         <CardContent>
                             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
                                 <Typography sx={{ fontWeight: "bold" }}>{report?.title ?? "No Title"}</Typography>
+                                    {
+                                        !disabledEdit &&
                                 <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
                                     <Button variant="outlined" color="primary" size="small" onClick={() => setIsOpenReportModal(true)}><Edit fontSize="small" /></Button>
-                                    <Button variant="outlined" color="error" size="small" onClick={handleDeleteReport}><Delete fontSize="small" /></Button>
+                                        <Button variant="outlined" color="error" size="small" onClick={handleDeleteReport}><Delete fontSize="small" /></Button>
                                 </Box>
+                                    }
                             </Box>
                             <Box dangerouslySetInnerHTML={{ __html: report?.content ?? "No Content" }} />
                         </CardContent>

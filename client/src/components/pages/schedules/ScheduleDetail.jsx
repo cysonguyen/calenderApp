@@ -583,5 +583,5 @@ function getIntervalText(interval, intervalCount) {
     if (Number(intervalCount) === 1) {
         return `${intervalCount} ${interval.toLowerCase()} /1 session`;
     }
-    return `${intervalCount} ${interval.toLowerCase()}s /${intervalCount} sessions`;
+    return `${intervalCount} ${interval.toLowerCase()}s /1 sessions`;
 }
