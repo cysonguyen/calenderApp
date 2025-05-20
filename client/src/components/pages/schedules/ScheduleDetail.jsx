@@ -117,7 +117,7 @@ export default function ScheduleDetail({ scheduleId }) {
                 setOpenNotification(true);
                 setMessage({
                     type: "error",
-                    message: res.errors,
+                    message: typeof res.errors === "string" ? res.errors : 'Something went wrong',
                 });
             }
         },
@@ -138,7 +138,7 @@ export default function ScheduleDetail({ scheduleId }) {
                 setOpenNotification(true);
                 setMessage({
                     type: "error",
-                    message: res.errors,
+                    message: typeof res.errors === "string" ? res.errors : 'Something went wrong',
                 });
             }
         },

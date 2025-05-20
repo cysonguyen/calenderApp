@@ -141,15 +141,6 @@ export default function AppBar({ onDrawerToggle }) {
         <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
           Calendar App
         </Typography>
-        <Search>
-          <SearchIconWrapper>
-            <SearchIcon />
-          </SearchIconWrapper>
-          <StyledInputBase
-            placeholder="Search…"
-            inputProps={{ 'aria-label': 'search' }}
-          />
-        </Search>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton id="popover-notification" color="inherit" onClick={handleOpenNotification}>
             <Badge badgeContent={unreadNotificationsSize ? '!' : null} color="error">
