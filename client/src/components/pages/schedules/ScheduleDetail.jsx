@@ -167,6 +167,13 @@ export default function ScheduleDetail({ scheduleId }) {
 
     const handleSave = useCallback(() => {
         const payload = { ...schedule, userIds: structuredClone(selectedUsers), group_ids: structuredClone(selectedGroups) };
+        if (selectedGroups.length === 0) {
+            delete payload.group_ids;
+        }
+        if (selectedUsers.length === 0) {
+            delete payload.userIds;
+        }
+
         if (scheduleId === "add") {
             createSchedule(payload);
         } else {

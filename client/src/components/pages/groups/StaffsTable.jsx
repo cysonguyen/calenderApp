@@ -59,10 +59,6 @@ export function StaffTable({ isLoading, rows, initialColumns, selectedUsers, onS
         }));
     }, []);
 
-    console.log('selectedUsers', selectedUsers);
-    
-
-
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>

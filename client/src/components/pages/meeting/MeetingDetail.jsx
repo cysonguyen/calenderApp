@@ -13,6 +13,8 @@ import { ROLES } from "@/utils/const";
 import { StaffTable } from "../groups/StaffsTable";
 import { createReportApi, deleteReportApi, updateReportApi } from "@/app/api/client/report";
 import { Delete, Edit } from "@mui/icons-material";
+import { JobDetail } from "@/components/jobs/JobDetails";
+
 export default function MeetingDetail({ id, scheduleId, indexCycle }) {
     const queryClient = useQueryClient();
     const [user, _update, isInitialized] = useUser();
@@ -22,7 +24,7 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
         queryKey: ["schedule", scheduleId],
         queryFn: () => getScheduleByIdApi({ scheduleId }),
         placeholderData: (placeholderData) => placeholderData,
-        enabled: !!scheduleId && isInitialized && id === "add",
+        enabled: !!scheduleId && isInitialized,
         onSuccess: (data) => {
             setSelectedUsers(data?.accepted_ids ? JSON.parse(data?.accepted_ids) : []);
         }
@@ -100,7 +102,6 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
     const onChangeSelectedUsers = useCallback((selectedUsers) => {
         setSelectedUsers(selectedUsers);
     }, []);
-
     return (
         <Box
             component="main"
@@ -114,7 +115,7 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
         >
             {
                 disabledEdit ? (
-                    <MeetingInfo meeting={meeting} />
+                    <MeetingInfo meeting={meeting} scheduleId={scheduleId} indexCycle={indexCycle} schedule={schedule} />
                 ) : (
                     <Paper sx={{ p: 4, display: "flex", flexDirection: "column", gap: 4 }}>
                         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -173,16 +174,7 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
                                                 ? "Select staffs"
                                                 : "Staffs in meeting"}
                                         </Typography>
-                                        {/* {id !== "add" && (
-                                            <Button
-                                                variant="text"
-                                                color="primary"
-                                                size="small"
-                                                onClick={() => setIsOpenEditModal(true)}
-                                            >
-                                                Add Staff
-                                            </Button>
-                                        )} */}
+
                                     </Box>
                                     <StaffTable
                                         rows={schedule?.Users}
@@ -194,6 +186,11 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
                                     />
                                 </Box>
                             </Box>
+                            {
+                                id !== "add" && (
+                                    <JobDetail scheduleId={scheduleId} indexCycle={indexCycle} listStaffs={schedule?.Users ?? []} disabledEdit={disabledEdit} />
+                                )
+                            }
                             {
                                 id !== "add" && (
                                     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -332,8 +329,12 @@ const columns = (router) => {
     ];
 };
 
-const MeetingInfo = ({ meeting }) => {
+const MeetingInfo = ({ meeting, scheduleId, indexCycle, schedule }) => {
     if (!meeting) return null;
+    const [user, _update, isInitialized] = useUser();
+    const disabledEdit = useMemo(() => {
+        return user?.role !== ROLES.LEADER;
+    }, [user?.role]);
     return (
         <Paper sx={{ p: 4, display: "flex", flexDirection: "column", gap: 2 }}>
             <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -350,15 +351,16 @@ const MeetingInfo = ({ meeting }) => {
                     <Typography>{dayjs(meeting.start_time).format("HH:mm")} - {dayjs(meeting.end_time).format("HH:mm")} - {dayjs(meeting.start_time).format("DD/MM/YYYY")}</Typography>
                 </Box>
             </Box>
+            <JobDetail scheduleId={scheduleId} indexCycle={indexCycle} listStaffs={schedule?.Users ?? []} disabledEdit={disabledEdit} />
             <Box sx={{ display: "flex", flexDirection: "column" }}>
-                <Typography sx={{ fontWeight: "bold" }}>Report:</Typography>
+                <Typography sx={{ fontWeight: "bold" }}>Report</Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     {
                         meeting?.Reports?.length === 0 ? (
                             <Typography sx={{ fontStyle: "italic", color: "text.secondary" }}>No report</Typography>
                         ) : (
                             meeting?.Reports?.map((report) => (
-                                <ReportInfo key={`report-${report.id}`} report={report} meetingId={meeting.id} disabledEdit={true} />
+                                <ReportInfo key={`report-${report.id}`} report={report} meetingId={meeting.id} disabledEdit={disabledEdit} />
                             ))
                         )
                     }
@@ -387,13 +389,13 @@ export function ReportInfo({ report, meetingId, disabledEdit }) {
                         <CardContent>
                             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
                                 <Typography sx={{ fontWeight: "bold" }}>{report?.title ?? "No Title"}</Typography>
-                                    {
-                                        !disabledEdit &&
-                                <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
-                                    <Button variant="outlined" color="primary" size="small" onClick={() => setIsOpenReportModal(true)}><Edit fontSize="small" /></Button>
+                                {
+                                    !disabledEdit &&
+                                    <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
+                                        <Button variant="outlined" color="primary" size="small" onClick={() => setIsOpenReportModal(true)}><Edit fontSize="small" /></Button>
                                         <Button variant="outlined" color="error" size="small" onClick={handleDeleteReport}><Delete fontSize="small" /></Button>
-                                </Box>
-                                    }
+                                    </Box>
+                                }
                             </Box>
                             <Box dangerouslySetInnerHTML={{ __html: report?.content ?? "No Content" }} />
                         </CardContent>
@@ -416,11 +418,9 @@ export function ReportModalDialog({ open, onClose, initialReport, meetingId }) {
             meeting_id: meetingId,
             ...value,
         }
-        console.log('payLoad', payLoad);
         try {
             let res = null;
             if (initialReport) {
-                console.log('updateReportApi', initialReport.id);
                 res = await updateReportApi({ reportId: initialReport.id, report: payLoad });
             } else {
                 res = await createReportApi({ report: payLoad });

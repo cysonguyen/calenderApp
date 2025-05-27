@@ -15,9 +15,11 @@ import {
 import Link from 'next/link';
 import { useMutation } from '@tanstack/react-query';
 import { login } from '@/app/api/client/account';
+import { useUser } from '@/hooks/useUser';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [_user, updateUser, _isInitialized] = useUser();
   const [openNotification, setOpenNotification] = useState(false);
   const [message, setMessage] = useState('');
   const [formData, setFormData] = useState({
@@ -32,13 +34,14 @@ export default function LoginPage() {
         const { token, user } = response
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        fetch('/api/store-token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ token }),
-        });
+        updateUser(user);
+        // fetch('/api/store-token', {
+        //   method: 'POST',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify({ token }),
+        // });
         router.push('/schedules');
       } else {
         setOpenNotification(true);

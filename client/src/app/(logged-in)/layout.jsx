@@ -19,7 +19,6 @@ export default function ProtectedLayout({ children }) {
   };
 
   useEffect(() => {
-    console.log('check', notification);
     if (notification) {
       setOpenNotification(true);
     }

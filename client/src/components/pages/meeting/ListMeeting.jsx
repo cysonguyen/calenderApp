@@ -92,10 +92,10 @@ export default function ListMeeting({ scheduleId }) {
                             <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
                                 <Typography variant="h6" sx={{ marginTop: 0 }}>Session {cycle.cycle_index} ({dayjs(cycle.start_time).format('DD/MM/YYYY HH:mm')} - {dayjs(cycle.end_time).format('DD/MM/YYYY HH:mm')})</Typography>
                                 {
-                                    !disabledEdit && (
+                                    !disabledEdit && !sortMeetings?.length  && (
                                         <Button
                                             onClick={() => router.push(`/meeting?id=add&scheduleId=${scheduleId}&indexCycle=${cycle.cycle_index}`)}
-                                            variant="text" color="primary" sx={{ textDecoration: 'underline' }} size="small">Add Meeting</Button>
+                                            variant="text" color="primary" sx={{ textDecoration: 'underline' }} size="small">Start Meeting</Button>
                                     )
                                 }
                             </Box>

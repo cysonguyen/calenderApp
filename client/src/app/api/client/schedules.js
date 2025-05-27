@@ -8,7 +8,6 @@ export async function getSchedulesApi({ userId, dateRange, ...query }) {
 }
 
 export async function getScheduleByIdApi({ scheduleId, dateRange, ...query }) {
-    console.log('scheduleId', scheduleId);
     return await axios.get(`${BASE_URL}/schedule/${scheduleId}`, {
         params: {
             ...dateRange,
