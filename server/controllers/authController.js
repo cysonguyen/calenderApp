@@ -1,9 +1,10 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { User } = require("../models");
+const { User, Company } = require("../models");
 const { Op } = require("sequelize");
 const { ROLES } = require("../utils/const");
 const { validateCreateFields } = require("../utils/object/account");
+const sequelize = require("../config/sequelize");
 
 module.exports = {
   async register(req, res) {
@@ -34,20 +35,34 @@ module.exports = {
 
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
-      const user = await User.create({
-        username,
-        email,
-        password: hashedPassword,
-        full_name,
-        msnv,
-        level,
-        work_place,
-        birth_day,
-        role: ROLES.LEADER,
+
+      let user;
+      let company;
+      await sequelize.transaction(async (transaction) => {
+        company = await Company.create({
+          name: full_name,
+        }, { transaction });
+
+        console.log('company', company.id);
+
+
+        user = await User.create({
+          username,
+          email,
+          password: hashedPassword,
+          full_name,
+          msnv,
+          level,
+          work_place,
+          birth_day,
+          role: ROLES.LEADER,
+          company_id: company.id,
+        }, { transaction });
+
       });
 
       const token = jwt.sign(
-        { id: user.id, username: user.username },
+        { id: user.id, username: user.username, company_id: company.id },
         process.env.JWT_SECRET,
         { expiresIn: "1d" }
       );
@@ -81,7 +96,7 @@ module.exports = {
       }
 
       const token = jwt.sign(
-        { id: user.id, username: user.username },
+        { id: user.id, username: user.username, company_id: user.company_id },
         process.env.JWT_SECRET,
         { expiresIn: "1d" }
       );

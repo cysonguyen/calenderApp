@@ -15,6 +15,7 @@ const Schedule = sequelize.define(
     cycle_edited: { type: DataTypes.TEXT, allowNull: true },
     when_expired: { type: DataTypes.DATE, allowNull: true },
     accepted_ids: { type: DataTypes.TEXT, allowNull: false, defaultValue: `[]` },
+    company_id: { type: DataTypes.INTEGER, allowNull: false },
   },
   { timestamps: true }
 );

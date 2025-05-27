@@ -15,6 +15,7 @@ const Report = sequelize.define(
         content: { type: DataTypes.TEXT, allowNull: false },
         createdAt: { type: DataTypes.DATE, allowNull: false },
         updatedAt: { type: DataTypes.DATE, allowNull: false },
+        company_id: { type: DataTypes.INTEGER, allowNull: false },
     },
     { timestamps: true }
 );

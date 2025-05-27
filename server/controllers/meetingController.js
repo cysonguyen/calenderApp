@@ -8,6 +8,7 @@ const { createMeetingCycle } = require("./meetingCycleController");
 
 const createMeeting = async (req, res) => {
     try {
+        const { company_id } = req;
         const {
             schedule_id,
             meeting_cycle_id,
@@ -49,7 +50,8 @@ const createMeeting = async (req, res) => {
                     startTime,
                     endTime,
                     cycle_index,
-                    transaction
+                    transaction,
+                    company_id
                 );
             } else {
                 meetingCycle = await MeetingCycle.findByPk(meeting_cycle_id, {
@@ -81,6 +83,7 @@ const createMeeting = async (req, res) => {
                     start_time,
                     end_time,
                     list_partner_ids: JSON.stringify(list_partner_ids),
+                    company_id,
                 },
                 { transaction }
             );
@@ -93,7 +96,7 @@ const createMeeting = async (req, res) => {
                 {
                     cycle_edited: newEditedSchedule,
                 },
-                { where: { id: schedule_id }, transaction }
+                { where: { id: schedule_id, company_id }, transaction }
             );
         });
 
@@ -102,6 +105,7 @@ const createMeeting = async (req, res) => {
                 user_id: partner_id,
                 message: `You have a new meeting with ${title}`,
                 seen: false,
+                company_id,
             }))
         );
         console.log("list_partner_ids", list_partner_ids);
@@ -119,6 +123,7 @@ const createMeeting = async (req, res) => {
 
 const updateMeeting = async (req, res) => {
     try {
+        const { company_id } = req;
         const { meeting_id } = req.params;
         const {
             meeting_cycle_id,
@@ -183,6 +188,7 @@ const updateMeeting = async (req, res) => {
                     user_id: partner_id,
                     message: `You was removed from meeting ${meeting.title}`,
                     seen: false,
+                    company_id,
                 }))
             );
         }
@@ -192,6 +198,7 @@ const updateMeeting = async (req, res) => {
                     user_id: partner_id,
                     message: `You have a new meeting with ${meeting.title}`,
                     seen: false,
+                    company_id,
                 }))
             );
         }
@@ -256,12 +263,13 @@ const getMeetingById = async (req, res) => {
 
 const getMeetingsByCycleId = async (req, res) => {
     try {
+        const { company_id } = req;
         const { cycle_id } = req.params;
         if (!cycle_id) {
             return res.status(400).json({ error: ["Cycle ID is required"] });
         }
         const meetings = await Meeting.findAll({
-            where: { meeting_cycle_id: cycle_id },
+            where: { meeting_cycle_id: cycle_id, company_id },
         });
         res.status(200).json(meetings);
     } catch (error) {

@@ -6,6 +6,7 @@ const UserGroup = sequelize.define(
   {
     user_id: { type: DataTypes.INTEGER, allowNull: false },
     group_id: { type: DataTypes.INTEGER, allowNull: false },
+    company_id: { type: DataTypes.INTEGER, allowNull: false },
   },
   { timestamps: true }
 );

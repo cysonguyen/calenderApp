@@ -19,6 +19,10 @@ const Notification = sequelize.define("Notification", {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false,
+    },
+    company_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
     }
 }, { timestamps: true });
 

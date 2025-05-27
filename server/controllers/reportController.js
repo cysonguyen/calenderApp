@@ -6,6 +6,7 @@ const { validateAvailabilityMeeting } = require("../utils/object/meeting");
 
 const createReport = async (req, res) => {
     try {
+        const { company_id } = req;
         const {
             meeting_id,
             title,
@@ -31,6 +32,7 @@ const createReport = async (req, res) => {
                 meeting_id,
                 title,
                 content,
+                company_id,
             }, { transaction });
         });
 
@@ -109,12 +111,13 @@ const getReportById = async (req, res) => {
 
 const getReportsByMeetingId = async (req, res) => {
     try {
+        const { company_id } = req;
         const { meeting_id } = req.params;
         if (!meeting_id) {
             return res.status(400).json({ error: ["Meeting ID is required"] });
         }
         const reports = await Report.findAll({
-            where: { meeting_id: meeting_id },
+            where: { meeting_id: meeting_id, company_id },
         });
         res.status(200).json(reports);
     } catch (error) {

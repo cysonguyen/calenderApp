@@ -38,4 +38,28 @@ console.log("File 'accounts.xlsx' đã được tạo thành công!");
   thêm giao diện xử lý accept meeting
 
   ---> đổi lại ko p là giảng viên nữa chuyển thành nhóm trưởng và thành viên
+
+
+
+
+
+  schedule gồm nhiều job: job xác định bằng start cycle, và end cycle khi done task hoặc close task
+  thêm bảng job --> nhiêu task --> nhiều user (n-n)
+    title
+    description
+    cycle_start
+    cycle_end
+    status: IN_PROGRESS, CLOSED, LATE
+    deadline
+    
+  query jobs: cần list user nằm trong job, tính toán tiến độ dựa vào list task done/ tổng task
+
+  thêm bảng task 
+    job_id
+    công việc
+    mô tả
+    status
+    deadline
+    người hoàn thành
+    done_at
 */ 

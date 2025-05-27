@@ -9,6 +9,10 @@ const MeetingCycle = require("./meetingCycles");
 const Notification = require("./notification");
 const Report = require("./report");
 const ScheduleGroup = require("./scheduleGroup");
+const Job = require("./job");
+const JobUser = require("./JobUser");
+const Task = require("./task");
+const Company = require("./company");
 
 User.belongsToMany(Group, { through: UserGroup, foreignKey: "user_id" });
 Group.belongsToMany(User, { through: UserGroup, foreignKey: "group_id" });
@@ -34,6 +38,15 @@ Report.belongsTo(Meeting, { foreignKey: "meeting_id", onDelete: "CASCADE" });
 Schedule.belongsToMany(Group, { through: ScheduleGroup, foreignKey: "schedule_id" });
 Group.belongsToMany(Schedule, { through: ScheduleGroup, foreignKey: "group_id" });
 
+Schedule.hasMany(Job, { foreignKey: "schedule_id", onDelete: "CASCADE" });
+Job.belongsTo(Schedule, { foreignKey: "schedule_id", onDelete: "CASCADE" });
+
+Job.belongsToMany(User, { through: JobUser, foreignKey: "job_id" });
+User.belongsToMany(Job, { through: JobUser, foreignKey: "user_id" });
+
+Job.hasMany(Task, { foreignKey: "job_id", onDelete: "CASCADE" });
+Task.belongsTo(Job, { foreignKey: "job_id", onDelete: "CASCADE" });
+
 sequelize
   .sync({ force: false })
   .then(() => console.log("Database synced"))
@@ -50,4 +63,8 @@ module.exports = {
   Notification,
   Report,
   ScheduleGroup,
+  Job,
+  JobUser,
+  Task,
+  Company,
 };

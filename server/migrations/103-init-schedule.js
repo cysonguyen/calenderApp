@@ -10,6 +10,7 @@ module.exports = {
         allowNull: false,
       },
       title: { type: Sequelize.STRING(255), allowNull: false },
+      company_id: { type: Sequelize.INTEGER, allowNull: false },
       description: { type: Sequelize.TEXT, allowNull: true },
       start_time: { type: Sequelize.DATE, allowNull: false },
       end_time: { type: Sequelize.DATE, allowNull: false },

@@ -12,12 +12,13 @@ const PAGE_SIZE = 10;
 module.exports = {
   async getAccountInfo(req, res) {
     try {
+      const { company_id } = req;
       const { id } = req.params;
       if (!id) {
         return res.status(400).json({ errors: ["Missing id"] });
       }
       const user = await User.findOne({
-        where: { id },
+        where: { id, company_id },
         attributes: { exclude: ["password"] },
       });
       if (!user) {
@@ -32,6 +33,7 @@ module.exports = {
 
   async getAccountInfoByQuery(req, res) {
     try {
+      const { company_id } = req;
       const { id, full_name, msnv, email, username, role, page = 0, pageSize = PAGE_SIZE } = req.query;
       const query = removeNullOrUndefined({ id, full_name, msnv, email, username, role });
       const whereClause = {};
@@ -43,7 +45,7 @@ module.exports = {
       if (query.role) whereClause.role = query.role;
 
       const users = await User.findAndCountAll({
-        where: whereClause,
+        where: { ...whereClause, company_id },
         attributes: { exclude: ["password"] },
         limit: Number(pageSize),
         offset: (Number(page)) * Number(pageSize),
@@ -64,12 +66,13 @@ module.exports = {
   async updateAccountInfo(req, res) {
     try {
       const { id } = req.params;
+      const { company_id } = req;
       const { full_name, username, email, msnv, level, work_place, birth_day } =
         req.body;
       if (!id) {
         return res.status(400).json({ errors: ["Missing id"] });
       }
-      const user = await User.findOne({ where: { id } });
+      const user = await User.findOne({ where: { id, company_id } });
       if (!user) {
         return res.status(400).json({ errors: ["User not found"] });
       }
@@ -111,6 +114,7 @@ module.exports = {
   async changePassword(req, res) {
     try {
       const { id } = req.params;
+      const { company_id } = req;
       const { password, oldPassword } = req.body;
       if (!id) {
         return res.status(400).json({ errors: ["Missing id"] });
@@ -121,7 +125,7 @@ module.exports = {
       if (!oldPassword) {
         return res.status(400).json({ errors: ["Missing old password"] });
       }
-      const user = await User.findOne({ where: { id } });
+      const user = await User.findOne({ where: { id, company_id } });
       if (!user) {
         return res.status(400).json({ errors: ["User not found"] });
       }
@@ -130,7 +134,7 @@ module.exports = {
         return res.status(400).json({ errors: ["Old password is incorrect"] });
       }
       const hashedPassword = await bcrypt.hash(password, 10);
-      await User.update({ password: hashedPassword }, { where: { id } });
+      await User.update({ password: hashedPassword }, { where: { id, company_id } });
       res.status(200).json({});
     } catch (error) {
       console.log(error);
@@ -140,6 +144,7 @@ module.exports = {
 
   async createGroup(req, res) {
     try {
+      const { company_id } = req;
       const { userIds, name, description } = req.body;
       if (
         !userIds ||
@@ -148,7 +153,7 @@ module.exports = {
       ) {
         return res.status(400).json({ errors: ["Missing required fields"] });
       }
-      const existingGroup = await Group.findOne({ where: { name } });
+      const existingGroup = await Group.findOne({ where: { name, company_id } });
       if (existingGroup) {
         return res.status(400).json({ errors: ["Group already exists"] });
       }
@@ -158,16 +163,18 @@ module.exports = {
         return res.status(400).json({ errors: ["User ids is invalid"] });
       }
       await sequelize.transaction(async (transaction) => {
-        group = await Group.create({ name, description }, { transaction });
+        group = await Group.create({ name, description, company_id }, { transaction });
         const useGroupEntries = userIds.map((userId) => ({
           group_id: group.id,
           user_id: userId,
+          company_id,
         }));
         await UserGroup.bulkCreate(useGroupEntries, { transaction });
       });
 
       await Notification.bulkCreate(userIds.map(userId => ({
         user_id: userId,
+        company_id,
         message: `You was added to group ${name}`,
         seen: false,
       })));
@@ -195,6 +202,7 @@ module.exports = {
     try {
       const { id } = req.params;
       const { name, description, userIds } = req.body;
+      const { company_id } = req;
       if (!id) {
         return res.status(400).json({ errors: ["Missing id"] });
       }
@@ -202,6 +210,7 @@ module.exports = {
         return res.status(400).json({ errors: ["Missing required fields"] });
       }
       const group = await Group.findByPk(id, {
+        where: { company_id },
         include: {
           model: User,
           attributes: { exclude: ["password"] },
@@ -219,22 +228,25 @@ module.exports = {
       const userGroupEntries = addedUserIds.map((userId) => ({
         user_id: userId,
         group_id: id,
+        company_id,
       }));
       const newData = removeNullOrUndefined({ name, description });
       await sequelize.transaction(async (transaction) => {
-        await Group.update(newData, { where: { id }, transaction });
-        await UserGroup.destroy({ where: { group_id: id, user_id: { [Op.in]: removedUserIds } }, transaction });
+        await Group.update(newData, { where: { id, company_id }, transaction });
+        await UserGroup.destroy({ where: { group_id: id, company_id, user_id: { [Op.in]: removedUserIds } }, transaction });
         await UserGroup.bulkCreate(userGroupEntries, { transaction });
       });
 
       await Notification.bulkCreate(addedUserIds.map(userId => ({
         user_id: userId,
+        company_id,
         message: `You was added to group ${name}`,
         seen: false,
       })));
 
       await Notification.bulkCreate(removedUserIds.map(userId => ({
         user_id: userId,
+        company_id,
         message: `You was removed from group ${name}`,
         seen: false,
       })));
@@ -260,10 +272,12 @@ module.exports = {
   async getGroupById(req, res) {
     try {
       const { id } = req.params;
+      const { company_id } = req;
       if (!id) {
         return res.status(400).json({ errors: ["Missing id"] });
       }
       const group = await Group.findByPk(id, {
+        where: { company_id },
         include: {
           model: User,
           attributes: { exclude: ["password"] },
@@ -283,6 +297,7 @@ module.exports = {
   async getGroupByUserId(req, res) {
     try {
       const { id } = req.params;
+      const { company_id } = req;
       if (!id) {
         return res.status(400).json({ errors: ["Missing id"] });
       }
@@ -291,7 +306,9 @@ module.exports = {
         include: {
           model: Group,
           through: { attributes: [] },
+          where: { company_id },
         },
+
       });
       if (!user) {
         return res.status(400).json({ errors: ["User not found"] });
@@ -306,12 +323,13 @@ module.exports = {
   async getGroupByQuery(req, res) {
     try {
       const { name, page = 0, id, pageSize = PAGE_SIZE } = req.query;
+      const { company_id } = req;
       const query = removeNullOrUndefined({ name, id });
       const whereClause = {};
       if (query.id) whereClause.id = query.id;
       if (query.name) whereClause.name = { [Op.like]: `%${query.name}%` };
       const groups = await Group.findAndCountAll({
-        where: whereClause,
+        where: { ...whereClause, company_id },
         limit: Number(pageSize),
         offset: (Number(page)) * Number(pageSize),
       });
@@ -330,21 +348,18 @@ module.exports = {
   async deleteGroup(req, res) {
     try {
       const { id } = req.params;
+      const { company_id } = req;
       if (!id) {
         return res.status(400).json({ errors: ["Missing id"] });
       }
-      const group = await Group.findByPk(id);
+      const group = await Group.findByPk(id, { where: { company_id } });
       if (!group) {
         return res.status(400).json({ errors: ["Group not found"] });
       }
       await sequelize.transaction(async (transaction) => {
-        await Group.destroy({ where: { id }, transaction });
-        await UserGroup.destroy({ where: { group_id: id }, transaction });
+        await Group.destroy({ where: { id, company_id }, transaction });
+        await UserGroup.destroy({ where: { group_id: id, company_id }, transaction });
       });
-
-      // notify users
-      //
-      //
 
       res.status(200).json({});
     } catch (error) {
@@ -355,6 +370,7 @@ module.exports = {
 
   async createStaffUser(req, res) {
     try {
+      const { company_id } = req;
       const { full_name, username, email, msnv, birth_day, password, work_place, level } = req.body;
       if (!full_name || !username || !email || !msnv || !password) {
         return res.status(400).json({ errors: ["Missing required fields"] });
@@ -362,13 +378,14 @@ module.exports = {
       const existingUser = await User.findOne({
         where: {
           [Op.or]: [{ email: email || null }, { username: username || null }],
+          company_id,
         },
       });
       if (existingUser) {
         return res.status(400).json({ errors: ["User already exists"] });
       }
       const hashedPassword = await bcrypt.hash(password, 10);
-      const data = removeNullOrUndefined({ full_name, username, email, msnv, birth_day, password: hashedPassword, role: ROLES.STAFF, work_place, level });
+      const data = removeNullOrUndefined({ full_name, username, email, msnv, birth_day, password: hashedPassword, role: ROLES.STAFF, work_place, level, company_id });
       const user = await User.create(data);
       res.status(200).json(user);
     } catch (error) {
@@ -378,6 +395,7 @@ module.exports = {
   },
   async importAccounts(req, res) {
     try {
+      const { company_id } = req;
       const { accounts } = req.body;
       if (!accounts) {
         return res.status(400).json({ errors: ["Missing accounts"] });
@@ -395,6 +413,7 @@ module.exports = {
       const existingUsers = await User.findAll({
         where: {
           [Op.or]: [{ email: emails }, { username: usernames }],
+          company_id,
         },
         attributes: ["email", "username"],
       });
@@ -423,6 +442,7 @@ module.exports = {
           birth_day: birthDay,
           password: hashedPassword,
           role: ROLES.STAFF,
+          company_id,
         }
         return removeNullOrUndefined(data);
       }));

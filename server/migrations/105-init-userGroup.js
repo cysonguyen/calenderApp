@@ -17,6 +17,7 @@ module.exports = {
         references: { model: "Groups", key: "id" },
         onDelete: "CASCADE"
       },
+      company_id: { type: Sequelize.INTEGER, allowNull: false },
       createdAt: { type: Sequelize.DATE, allowNull: false },
       updatedAt: { type: Sequelize.DATE, allowNull: false }
     });

@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { Schedule, ScheduleUser, User, Notification, UserGroup, Group } = require("../models");
+const { Schedule, ScheduleUser, User, Notification, UserGroup, Group, Job, Task } = require("../models");
 const { validateAvailabilitySchedule } = require("../utils/object/schedule");
 const {
   compareIdsArray,
@@ -10,11 +10,13 @@ const { getMeetingCyclesByQuery } = require("./meetingCycleController");
 const sequelize = require("../config/sequelize");
 const SSEService = require("../lib/sseService");
 const ScheduleGroup = require("../models/scheduleGroup");
+const { JOB_STATUS } = require("../utils/const");
 const pageSize = 10;
 
 module.exports = {
   async getSchedulesByUserId(req, res) {
     try {
+      const { company_id } = req;
       const { userId } = req.params;
       const {
         startTime = new Date(),
@@ -56,13 +58,30 @@ module.exports = {
         include: [
           {
             model: User,
-            where: { id: userId },
+            where: { id: Number(userId), company_id },
             through: { attributes: [] },
             attributes: { exclude: ["password"] },
           },
           {
             model: Group,
             attributes: ["id", "name"],
+          },
+          {
+            model: Job,
+            required: false,
+            where: { status: JOB_STATUS.IN_PROGRESS },
+            attributes: { exclude: [] },
+            include: [
+              {
+                model: Task,
+                attributes: { exclude: [] },
+              },
+              {
+                model: User,
+                through: { attributes: [] },
+                attributes: { exclude: ["password"] },
+              },
+            ],
           },
         ],
         where: whereCondition,
@@ -81,7 +100,8 @@ module.exports = {
           const meetingCycles = await getMeetingCyclesByQuery(
             schedule.id,
             startTime,
-            endTime
+            endTime,
+            company_id
           );
           scheduleData.meetingCycles = meetingCycles;
 
@@ -91,6 +111,18 @@ module.exports = {
           } else {
             scheduleData.status = "unaccepted";
           }
+
+          scheduleData.Jobs?.forEach((job) => {
+            const tasks = job.Tasks;
+            const progress = tasks.filter((task) => task.status === JOB_STATUS.IN_PROGRESS).length;
+            console.log("progress", progress);
+            const total = tasks.length;
+            job.progress = {
+              in_progress: progress,
+              total: total,
+              closed: total - progress,
+            }
+          });
 
           return scheduleData;
         })
@@ -104,6 +136,7 @@ module.exports = {
 
   async getScheduleById(req, res) {
     try {
+      const { company_id } = req;
       const { scheduleId } = req.params;
       const { startTime, endTime } = req.query;
       if (!scheduleId) {
@@ -120,6 +153,23 @@ module.exports = {
             model: Group,
             attributes: ["id", "name"],
           },
+          {
+            model: Job,
+            required: false,
+            where: { status: JOB_STATUS.IN_PROGRESS },
+            attributes: { exclude: [] },
+            include: [
+              {
+                model: Task,
+                attributes: { exclude: [] },
+              },
+              {
+                model: User,
+                through: { attributes: [] },
+                attributes: { exclude: ["password"] },
+              },
+            ],
+          },
         ],
       });
 
@@ -129,11 +179,23 @@ module.exports = {
       const meetingCycles = await getMeetingCyclesByQuery(
         schedule.id,
         startTime,
-        endTime
+        endTime,
+        company_id
       );
       console.log("meetingCycles", meetingCycles);
       const scheduleData = schedule.get({ plain: true });
       scheduleData.meetingCycles = meetingCycles;
+
+      scheduleData.Jobs?.forEach((job) => {
+        const tasks = job.Tasks;
+        const progress = tasks.filter((task) => task.status === JOB_STATUS.IN_PROGRESS).length;
+        const total = tasks.length;
+        job.progress = {
+          in_progress: progress,
+          closed: total - progress,
+          total: total,
+        }
+      });
       res.status(200).json(scheduleData);
     } catch (error) {
       console.log(error);
@@ -143,6 +205,7 @@ module.exports = {
 
   async createSchedule(req, res) {
     try {
+      const { company_id } = req;
       const { authorUserId } = req.params;
       const {
         title,
@@ -183,7 +246,7 @@ module.exports = {
           return res.status(400).json({ errors: ["GroupIds is invalid"] });
         }
         const groupUsers = await UserGroup.findAll({
-          where: { group_id: { [Op.in]: group_ids } },
+          where: { group_id: { [Op.in]: group_ids }, company_id },
         });
         groupUsers.forEach((user) => userIdsToAdd.add(Number(user.user_id)));
       }
@@ -218,6 +281,7 @@ module.exports = {
           interval,
           interval_count,
           when_expired,
+          company_id,
           author_id: authorUserId,
           accepted_ids: `[${authorUserId}]`,
         });
@@ -225,6 +289,7 @@ module.exports = {
           (userId) => ({
             schedule_id: schedule.id,
             user_id: userId,
+            company_id,
           })
         );
         await ScheduleUser.bulkCreate(scheduleUserEntries, { transaction });
@@ -232,6 +297,7 @@ module.exports = {
           const scheduleGroupEntries = group_ids.map((groupId) => ({
             schedule_id: schedule.id,
             group_id: groupId,
+            company_id,
           }));
           await ScheduleGroup.bulkCreate(scheduleGroupEntries, { transaction });
         }
@@ -249,6 +315,7 @@ module.exports = {
           user_id: userId,
           message: `You have a new schedule ${title}`,
           seen: false,
+          company_id,
         }))
       );
 
@@ -265,6 +332,7 @@ module.exports = {
 
   async updateSchedule(req, res) {
     try {
+      const { company_id } = req;
       const { authorUserId } = req.params;
       const { scheduleId, userIds, group_ids } = req.body;
       const payload = removeNullOrUndefined(
@@ -295,7 +363,7 @@ module.exports = {
           return res.status(400).json({ errors: ["GroupIds is invalid"] });
         }
         const groupUsers = await UserGroup.findAll({
-          where: { group_id: { [Op.in]: group_ids } },
+          where: { group_id: { [Op.in]: group_ids }, company_id },
         });
         groupUsers.forEach((user) => userIdsToAdd.add(Number(user.user_id)));
       }
@@ -326,13 +394,14 @@ module.exports = {
       await sequelize.transaction(async (transaction) => {
         const newAcceptedIds = JSON.parse(existingSchedule.accepted_ids).filter((id) => !removedUsers.includes(id));
         await Schedule.update({ ...payload, accepted_ids: JSON.stringify(newAcceptedIds) }, {
-          where: { id: scheduleId },
+          where: { id: scheduleId, company_id },
           transaction,
         });
         if (addedUsers.length > 0) {
           const scheduleUserEntries = addedUsers.map((userId) => ({
             schedule_id: scheduleId,
             user_id: userId,
+            company_id,
           }));
           await ScheduleUser.bulkCreate(scheduleUserEntries, { transaction });
         }
@@ -341,18 +410,20 @@ module.exports = {
             where: {
               schedule_id: scheduleId,
               user_id: { [Op.in]: removedUsers },
+              company_id,
             },
             transaction,
           });
         }
         if (group_ids) {
           await ScheduleGroup.destroy({
-            where: { schedule_id: scheduleId },
+            where: { schedule_id: scheduleId, company_id },
             transaction,
           });
           const scheduleGroupEntries = group_ids.map((groupId) => ({
             schedule_id: scheduleId,
             group_id: groupId,
+            company_id,
           }));
           await ScheduleGroup.bulkCreate(scheduleGroupEntries, { transaction });
         }
@@ -364,6 +435,7 @@ module.exports = {
           message: `You have a new schedule ${payload.title ?? existingSchedule.title
             }`,
           seen: false,
+          company_id,
         }))
       );
       await Notification.bulkCreate(
@@ -372,6 +444,7 @@ module.exports = {
           message: `You was removed from schedule ${payload.title ?? existingSchedule.title
             }`,
           seen: false,
+          company_id,
         }))
       );
       SSEService.sendToUsers([...addedUsers, ...removedUsers], {
@@ -431,6 +504,7 @@ module.exports = {
     try {
       const { scheduleId } = req.params;
       const { userId } = req.body;
+      const { company_id } = req;
       if (!scheduleId || !userId) {
         return res.status(400).json({ errors: ["Missing scheduleId or userId"] });
       }
@@ -466,7 +540,7 @@ module.exports = {
         return res.status(400).json({ errors: ["User already accepted"] });
       }
       acceptedIds.push(userId);
-      await Schedule.update({ accepted_ids: `[${acceptedIds}]` }, { where: { id: scheduleId } });
+      await Schedule.update({ accepted_ids: `[${acceptedIds}]` }, { where: { id: scheduleId, company_id } });
       return res.status(200).json({ scheduleId });
     } catch (error) {
       console.log(error);

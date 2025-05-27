@@ -13,6 +13,7 @@ const User = sequelize.define(
     work_place: { type: DataTypes.STRING(255), allowNull: true },
     birth_day: { type: DataTypes.DATE, allowNull: true },
     role: { type: DataTypes.STRING(50), allowNull: false },
+    company_id: { type: DataTypes.INTEGER, allowNull: false },
   },
   { timestamps: true }
 );

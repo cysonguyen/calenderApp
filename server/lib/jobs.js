@@ -21,7 +21,7 @@ async function processSchedules(offset = 0, nextRun = false) {
 
     for (const schedule of schedules) {
         const scheduleData = schedule.get({ plain: true });
-
+        const company_id = schedule.company_id;
         const cycles = getMeetingCycles(scheduleData, start_time, end_time, CYCLE_LIMIT_PER_SCHEDULE);
         console.log("cycles", cycles);
         for (const cycle of cycles) {
@@ -34,7 +34,7 @@ async function processSchedules(offset = 0, nextRun = false) {
 
             if (!exists) {
                 console.log("create cycle", cycle);
-                await createMeetingCycle(schedule.id, cycle.start_time, cycle.end_time, cycle.cycle_index);
+                await createMeetingCycle(schedule.id, cycle.start_time, cycle.end_time, cycle.cycle_index, company_id);
                 console.log(`Created cycle for schedule ${schedule.id}`);
             }
         }

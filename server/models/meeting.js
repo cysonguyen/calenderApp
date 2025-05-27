@@ -14,6 +14,7 @@ const Meeting = sequelize.define(
     start_time: { type: DataTypes.DATE, allowNull: false },
     end_time: { type: DataTypes.DATE, allowNull: false },
     list_partner_ids: { type: DataTypes.TEXT, allowNull: true },
+    company_id: { type: DataTypes.INTEGER, allowNull: false },
   },
   { timestamps: true }
 );

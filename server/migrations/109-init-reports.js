@@ -3,22 +3,28 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('notifications', {
+    await queryInterface.createTable('reports', {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      user_id: {
+      company_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-      message: {
+      meeting_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: { model: "meetings", key: "id" },
+        onDelete: "CASCADE"
+      },
+      title: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      seen: {
-        type: Sequelize.BOOLEAN,
+      content: {
+        type: Sequelize.TEXT,
         allowNull: false,
       },
       createdAt: {
@@ -33,6 +39,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('notifications');
+    await queryInterface.dropTable('reports');
   }
 };

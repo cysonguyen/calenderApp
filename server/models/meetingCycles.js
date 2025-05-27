@@ -11,6 +11,7 @@ const MeetingCycle = sequelize.define(
         start_time: { type: DataTypes.DATE, allowNull: false },
         end_time: { type: DataTypes.DATE, allowNull: false },
         cycle_index: { type: DataTypes.INTEGER, allowNull: false },
+        company_id: { type: DataTypes.INTEGER, allowNull: false },
     },
     { timestamps: true }
 );

@@ -5,20 +5,20 @@ const { Op, or } = require("sequelize");
 const MAX_SIZE_MONTH = 31;
 
 module.exports = {
-    async createMeetingCycle(schedule_id, start_time, end_time, cycle_index, transaction = null) {
+    async createMeetingCycle(schedule_id, start_time, end_time, cycle_index, transaction = null, company_id) {
         try {
-            const existingMeetingCycle = await MeetingCycle.findOne({ where: { schedule_id, start_time, end_time, cycle_index } });
+            const existingMeetingCycle = await MeetingCycle.findOne({ where: { schedule_id, start_time, end_time, cycle_index, company_id } });
             if (existingMeetingCycle) {
                 return existingMeetingCycle;
             }
-            const meetingCycle = await MeetingCycle.create({ schedule_id, start_time, end_time, cycle_index }, { transaction });
+            const meetingCycle = await MeetingCycle.create({ schedule_id, start_time, end_time, cycle_index, company_id }, { transaction });
             return meetingCycle;
         } catch (error) {
             throw error;
         }
     },
 
-    async getMeetingCyclesByQuery(schedule_id, start_time = new Date(), end_time = new Date()) {
+    async getMeetingCyclesByQuery(schedule_id, start_time = new Date(), end_time = new Date(), company_id) {
         try {
             const schedule = await Schedule.findByPk(schedule_id);
             if (!schedule) throw new Error("Schedule not found");
@@ -33,6 +33,7 @@ module.exports = {
                 }],
                 where: {
                     schedule_id,
+                    company_id,
                     start_time: { [Op.between]: [startTime, endTime] }
                 },
                 order: [['start_time', 'ASC']],

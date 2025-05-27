@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { User } = require("../models");
+const { User, Company } = require("../models");
 
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -23,6 +23,12 @@ const authenticateToken = async (req, res, next) => {
     if (user.id != userId) {
       return res.status(401).json({ errors: ["Unauthorized"] });
     }
+
+    const company = await Company.findByPk(decoded.company_id);
+    if (!company) {
+      return res.status(401).json({ errors: ["Company not found"] });
+    }
+    req.company_id = company.id;
 
     next();
   } catch (err) {
