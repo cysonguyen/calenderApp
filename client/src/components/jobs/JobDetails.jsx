@@ -1,6 +1,6 @@
 import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, List, ListItem, ListItemText, MenuItem, Select, Snackbar, TextField, Typography } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createJobApi, getJobsByScheduleId, updateJobApi } from "@/app/api/client/jobs";
+import { createJobApi, deleteJobApi, getJobsByScheduleId, updateJobApi } from "@/app/api/client/jobs";
 import { useCallback, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { useUser } from "@/hooks/useUser";
@@ -298,6 +298,31 @@ function JobDialog({ onClose, initialJob, listStaffs, scheduleId, indexCycle, di
         }
     }, [job, selectedStaffs]);
 
+    const handleDeleteJob = useCallback(async () => {
+        try {
+            const res = await deleteJobApi({ jobId: job?.id });
+            if (!res?.errors) {
+                queryClient.invalidateQueries({ queryKey: ["jobs", scheduleId, indexCycle] });
+                setOpenNotification(true);
+                setMessage({
+                    type: "success",
+                    message: "Deleted successfully",
+                });
+                setTimeout(() => {
+                    handleClose();
+                }, 1000);
+            } else {
+                setOpenNotification(true);
+                setMessage({
+                    type: "error",
+                    message: res?.errors?.message ?? "Something went wrong",
+                });
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }, [job]);
+
     const handleUpdateTask = useCallback((index, key, value) => {
         setJob((prev) => {
             const existingTasks = structuredClone(prev?.tasks ?? []);
@@ -393,9 +418,16 @@ function JobDialog({ onClose, initialJob, listStaffs, scheduleId, indexCycle, di
                             ))
                         }
                     </Box>
-                    <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
-                        <Button size="small" variant="contained" color="primary" onClick={handleSave}>Save</Button>
-                        <Button size="small" variant="contained" color="secondary" onClick={handleClose}>Cancel</Button>
+                    <Box sx={{ display: "flex", flexDirection: "row", gap: 1, justifyContent: "space-between" }}>
+                        <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
+                            <Button size="small" variant="contained" color="primary" onClick={handleSave}>Save</Button>
+                            <Button size="small" variant="contained" color="secondary" onClick={handleClose}>Cancel</Button>
+                        </Box>
+                        {
+                            !disabledEdit && (
+                                <Button size="small" variant="contained" color="error" onClick={handleDeleteJob}>Delete</Button>
+                            )
+                        }
                     </Box>
                 </Box>
             </CardContent>
