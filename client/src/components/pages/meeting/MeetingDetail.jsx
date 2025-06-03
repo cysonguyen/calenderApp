@@ -10,7 +10,7 @@ import dayjs from "dayjs";
 import { useUser } from "@/hooks/useUser";
 import { getScheduleByIdApi } from "@/app/api/client/schedules";
 import { ROLES } from "@/utils/const";
-import { StaffTable } from "../groups/StaffsTable";
+import { StaffTable } from "../staffs/StaffsTable";
 import { createReportApi, deleteReportApi, updateReportApi } from "@/app/api/client/report";
 import { Delete, Edit } from "@mui/icons-material";
 import { JobDetail } from "@/components/jobs/JobDetails";
@@ -201,7 +201,7 @@ export default function MeetingDetail({ id, scheduleId, indexCycle }) {
                                         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                                             {
                                                 isOpenReportModal ? (
-                                                    <ReportModalDialog open={isOpenReportModal} onClose={() => setIsOpenReportModal(false)} meetingId={id} />
+                                                    <ReportContainer open={isOpenReportModal} onClose={() => setIsOpenReportModal(false)} meetingId={id} />
                                                 ) : (
                                                     meeting?.Reports?.length === 0 ? (
                                                         <Typography sx={{ fontStyle: "italic", color: "text.secondary" }}>No report</Typography>
@@ -384,7 +384,7 @@ export function ReportInfo({ report, meetingId, disabledEdit }) {
             <Card>
                 {
                     isOpenReportModal ? <CardContent>
-                        <ReportModalDialog open={isOpenReportModal} onClose={() => setIsOpenReportModal(false)} meetingId={meetingId} initialReport={report} />
+                        <ReportContainer open={isOpenReportModal} onClose={() => setIsOpenReportModal(false)} meetingId={meetingId} initialReport={report} />
                     </CardContent> :
                         <CardContent>
                             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
@@ -405,7 +405,7 @@ export function ReportInfo({ report, meetingId, disabledEdit }) {
     )
 }
 
-export function ReportModalDialog({ open, onClose, initialReport, meetingId }) {
+export function ReportContainer({ open, onClose, initialReport, meetingId }) {
     const queryClient = useQueryClient();
     const [openNotification, setOpenNotification] = useState(false);
     const [message, setMessage] = useState({

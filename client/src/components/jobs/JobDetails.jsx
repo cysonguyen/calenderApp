@@ -127,7 +127,7 @@ function JobItemInfo({ job, listStaffs, scheduleId, indexCycle, disabledEdit }) 
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                     <Box>
-                        <Typography>Deadline: {dayjs(job.deadline).format("HH:mm, DD/MM/YYYY")}</Typography>
+                        <Typography>Deadline: {job?.deadline ? dayjs(job?.deadline).format("HH:mm, DD/MM/YYYY") : "N/A"}</Typography>
                     </Box>
                     <Box sx={{ display: "flex", flexDirection: "row", gap: 1, alignItems: "center", justifyContent: "space-between" }}>
                         <Box sx={{ display: "flex", flexDirection: "row", gap: 1, alignItems: "center" }}>
@@ -183,9 +183,9 @@ function JobItemInfo({ job, listStaffs, scheduleId, indexCycle, disabledEdit }) 
                                                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1, }}>
                                                     <Box sx={{ display: "flex", flexDirection: "row", gap: 1, alignItems: "center" }}>
                                                         <Typography>Assign to:</Typography>
-                                                        <Chip label={job.Users?.find((user) => user.id == task.assignee_id)?.full_name} />
+                                                        <Chip label={job?.Users?.find((user) => user.id == task.assignee_id)?.full_name} />
                                                     </Box>
-                                                    <Typography>Deadline: {dayjs(task.deadline).format("HH:mm, DD/MM/YYYY")}</Typography>
+                                                    <Typography>Deadline: {task?.deadline ? dayjs(task?.deadline).format("HH:mm, DD/MM/YYYY") : "N/A"}</Typography>
                                                 </Box>
                                             </CardContent>
                                         </Card>
@@ -267,6 +267,7 @@ function JobDialog({ onClose, initialJob, listStaffs, scheduleId, indexCycle, di
             ...job,
             schedule_id: scheduleId,
             cycle_start: indexCycle,
+            cycle_end: indexCycle,
             user_ids: selectedStaffs,
         }
         try {
@@ -342,7 +343,7 @@ function JobDialog({ onClose, initialJob, listStaffs, scheduleId, indexCycle, di
                         <TextField size="small" fullWidth label="Description" value={job?.description ?? ""} onChange={(e) => handleChange(e.target.value, "description")} />
                         <TextField size="small" fullWidth label="Deadline" disabled={disabledEdit} type="date" InputLabelProps={{
                             shrink: true,
-                        }} value={dayjs(job?.deadline).format("YYYY-MM-DD") ?? ""} onChange={(e) => handleChange(e.target.value, "deadline")} />
+                        }} value={dayjs(job?.deadline ?? "").format("YYYY-MM-DD") ?? ""} onChange={(e) => handleChange(e.target.value, "deadline")} />
                     </Box>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                         <Typography>Assign to</Typography>
@@ -469,7 +470,7 @@ function TaskItemDetail({ task, onDelete, index, listStaffs, selectedStaffs, onU
                     <TextField size="small" fullWidth label="Description" value={task?.description ?? ""} onChange={(e) => onUpdateTask?.(index, "description", e.target.value)} />
                     <TextField size="small" fullWidth label="Deadline" disabled={disabledEdit} type="date" InputLabelProps={{
                         shrink: true,
-                    }} value={dayjs(task?.deadline).format("YYYY-MM-DD") ?? ""} onChange={(e) => onUpdateTask?.(index, "deadline", e.target.value)} />
+                    }} value={dayjs(task?.deadline ?? "").format("YYYY-MM-DD") ?? ""} onChange={(e) => onUpdateTask?.(index, "deadline", e.target.value)} />
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                     <Typography>Assign to</Typography>

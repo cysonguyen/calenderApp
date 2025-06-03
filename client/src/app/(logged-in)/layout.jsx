@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
-import AppBar from '@/components/header/AppBar';
-import Drawer from '@/components/side-bar/Drawer';
+import AppBar from '@/components/resources/AppBar';
+import Drawer from '@/components/resources/Drawer';
 import '../globals.css';
 import useNotification from '@/hooks/useNotification';
 import { Alert, Snackbar } from '@mui/material';

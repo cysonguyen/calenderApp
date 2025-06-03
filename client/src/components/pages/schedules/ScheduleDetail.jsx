@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { StaffTable } from "../groups/StaffsTable";
+import { StaffTable } from "../staffs/StaffsTable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     createScheduleApi,
@@ -412,7 +412,7 @@ export default function ScheduleDetail({ scheduleId }) {
                         }
                         {
                             tab === "meeting" && (
-                                <ListMeeting scheduleId={scheduleId} />
+                                <ListMeeting scheduleId={scheduleId} schedule={schedule} />
                             )
                         }
 
@@ -580,7 +580,7 @@ function ScheduleInfo({ schedule }) {
             <Divider />
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <Typography sx={{ fontWeight: "bold" }}>Meetings:</Typography>
-                <ListMeeting scheduleId={schedule.id} />
+                <ListMeeting scheduleId={schedule.id} schedule={schedule} />
             </Box>
         </Paper >
     );
@@ -588,7 +588,7 @@ function ScheduleInfo({ schedule }) {
 
 function getIntervalText(interval, intervalCount) {
     if (Number(intervalCount) === 1) {
-        return `${intervalCount} ${interval.toLowerCase()} /1 session`;
+        return `${intervalCount} ${interval.toLowerCase()}`;
     }
-    return `${intervalCount} ${interval.toLowerCase()}s /1 sessions`;
+    return `${intervalCount} ${interval.toLowerCase()}s`;
 }

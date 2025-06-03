@@ -5,11 +5,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getGroupByIdApi } from "@/app/api/client/account";
 import { useState, useMemo, useCallback, startTransition } from "react";;
 import { useRouter } from "next/navigation";
-import Loading from "@/components/common/loading";
+import Loading from "@/components/resources/Loading";
 import { useGroupController } from "./comon/group.controller";
 import { useUser } from "@/hooks/useUser";
 import { ROLES } from "@/utils/const";
-import { StaffTable } from "./StaffsTable";
+import { StaffTable } from "../staffs/StaffsTable";
 
 const columns = (router) => {
     return [

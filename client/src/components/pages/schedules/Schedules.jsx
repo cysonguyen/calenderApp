@@ -8,7 +8,7 @@ import { useCallback, useMemo, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { useRouter } from "next/navigation";
 import { ButtonGroup } from "@mui/material";
-import DateTimeRangeSelector from "@/components/resources/date-time/DateRange";
+import DateTimeRangeSelector from "@/components/resources/DateRange";
 import dayjs from "dayjs";
 import Calendar from "./Calender/Calender";
 import { ROLES } from "@/utils/const";

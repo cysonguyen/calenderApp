@@ -6,7 +6,7 @@ import { ROLES } from '@/utils/const';
 import EditInfoModal from './EditInfoModal';
 import ChangePwModal from './ChangePwModal';
 import { useState, useCallback } from 'react';
-import Loading from '@/components/common/loading';
+import Loading from '@/components/resources/Loading';
 import { useMutation } from '@tanstack/react-query';
 import { changeInfoApi, changePasswordApi } from '@/app/api/client/account';
 import dayjs from 'dayjs';

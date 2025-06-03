@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Box, Button, Paper, Snackbar, Typography } from "@mui/material";
-import { StaffTable } from "../groups/StaffsTable";
+import { StaffTable } from "./StaffsTable";
 import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
 import StaffAddModal from "./StaffAddModal";
