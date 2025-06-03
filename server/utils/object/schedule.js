@@ -8,8 +8,6 @@ const {
 } = require("../helper");
 
 async function validateAvailabilitySchedule(newSchedule, userId) {
-  console.log("newSchedule", newSchedule);
-
   const user = await User.findByPk(userId, {
     include: [
       {
@@ -24,7 +22,6 @@ async function validateAvailabilitySchedule(newSchedule, userId) {
   const acceptedSchedules = schedules.filter((schedule) => JSON.parse(schedule.accepted_ids).some((id) => id == userId));
   const errors = [];
   const conflict = findFirstConflict(newSchedule, acceptedSchedules);
-  console.log(conflict);
   if (conflict) {
     errors.push({
       message: "Conflict with schedule",

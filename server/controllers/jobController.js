@@ -126,7 +126,7 @@ module.exports = {
         try {
             const { company_id } = req;
             const { job_id } = req.params;
-            const { title, description, deadline, user_ids, tasks, status, cycle_start, cycle_end } = req.body;
+            const { title, description, deadline, user_ids, tasks, status, cycle_end } = req.body;
 
             if (!Array.isArray(tasks) || tasks.length === 0) {
                 return res.status(400).json({ error: ["tasks must be an array"] });
@@ -138,7 +138,12 @@ module.exports = {
             }
 
             await sequelize.transaction(async (transaction) => {
-                const dataUpdate = removeNullOrUndefined({ title, description, deadline, status, cycle_start, cycle_end });
+                const dataUpdate = removeNullOrUndefined({ title, description, deadline, status, cycle_end });
+                if (status === JOB_STATUS.CLOSED) {
+                    dataUpdate.cycle_end = cycle_end;
+                } else {
+                    dataUpdate.cycle_end = null;
+                }
                 await job.update(dataUpdate, { transaction });
                 if (user_ids) {
                     await JobUser.bulkCreate(user_ids.map((user_id) => ({ job_id: job.id, user_id, company_id })), { transaction });
@@ -148,6 +153,11 @@ module.exports = {
                         const exitTask = job.Tasks.find(t => t.id === task.id);
                         if (!exitTask) {
                             return res.status(400).json({ error: ["Task not found"] });
+                        }
+                        if (task.status === JOB_STATUS.CLOSED && exitTask.status !== JOB_STATUS.CLOSED) {
+                            task.done_at = cycle_end;
+                        } else {
+                            task.done_at = exitTask.done_at;
                         }
                         await Task.update({ ...task }, { where: { id: task.id }, transaction });
                     } else {

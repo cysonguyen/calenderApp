@@ -25,7 +25,7 @@ module.exports = {
                 allowNull: true,
             },
             done_at: {
-                type: Sequelize.DATE,
+                type: Sequelize.INTEGER,
                 allowNull: true,
             },
             status: {

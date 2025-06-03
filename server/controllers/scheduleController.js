@@ -115,7 +115,6 @@ module.exports = {
           scheduleData.Jobs?.forEach((job) => {
             const tasks = job.Tasks;
             const progress = tasks.filter((task) => task.status === JOB_STATUS.IN_PROGRESS).length;
-            console.log("progress", progress);
             const total = tasks.length;
             job.progress = {
               in_progress: progress,
@@ -138,9 +137,13 @@ module.exports = {
     try {
       const { company_id } = req;
       const { scheduleId } = req.params;
-      const { startTime, endTime } = req.query;
+      const { startTime, endTime, status } = req.query;
       if (!scheduleId) {
         return res.status(400).json({ errors: ["Missing scheduleId"] });
+      }
+      let condition = {};
+      if (!status || status !== "All") {
+        condition = { status: status || JOB_STATUS.IN_PROGRESS };
       }
       const schedule = await Schedule.findByPk(scheduleId, {
         include: [
@@ -156,7 +159,7 @@ module.exports = {
           {
             model: Job,
             required: false,
-            where: { status: JOB_STATUS.IN_PROGRESS },
+            where: condition,
             attributes: { exclude: [] },
             include: [
               {
@@ -182,7 +185,6 @@ module.exports = {
         endTime,
         company_id
       );
-      console.log("meetingCycles", meetingCycles);
       const scheduleData = schedule.get({ plain: true });
       scheduleData.meetingCycles = meetingCycles;
 
@@ -254,7 +256,6 @@ module.exports = {
         return res.status(400).json({ errors: ["No users or groups selected"] });
       }
       userIdsToAdd.add(Number(authorUserId));
-      console.log("userIdsToAdd", userIdsToAdd);
       const errors = await validateAvailabilitySchedule(
         {
           start_time,

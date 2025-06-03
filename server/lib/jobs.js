@@ -23,7 +23,6 @@ async function processSchedules(offset = 0, nextRun = false) {
         const scheduleData = schedule.get({ plain: true });
         const company_id = schedule.company_id;
         const cycles = getMeetingCycles(scheduleData, start_time, end_time, CYCLE_LIMIT_PER_SCHEDULE);
-        console.log("cycles", cycles);
         for (const cycle of cycles) {
             const exists = await MeetingCycle.findOne({
                 where: {
